@@ -38,3 +38,6 @@ homog_benchmark.benchmark_hpatches(model)
 - [x] Upload Pretrained Models
 - [x] Add HPatches Homography Benchmark
 - [ ] Add More Benchmarks
+
+## Acknowledgement
+We have used code and been inspired by (among others) https://github.com/PruneTruong/DenseMatching , https://github.com/zju3dv/LoFTR , and https://github.com/GrumpyZhou/patch2pix  
