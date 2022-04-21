@@ -14,7 +14,7 @@ class HpatchesHomogBenchmark:
     """
 
     def __init__(self, dataset_path) -> None:
-        seqs_dir = "hpatches-sequences-release-jpg"
+        seqs_dir = "hpatches-sequences-release"
         self.seqs_path = os.path.join(dataset_path, seqs_dir)
         self.seq_names = sorted(os.listdir(self.seqs_path))
 
@@ -56,17 +56,17 @@ class HpatchesHomogBenchmark:
 
     def benchmark_hpatches(
         self, model, ransac_thr=3.0
-    ):  # ransac_thr should perhaps be lower than 1...
+    ):
         n_matches = []
         homog_dists = []
         for seq_idx, seq_name in tqdm(
             enumerate(self.seq_names), total=len(self.seq_names)
         ):
-            im1_path = os.path.join(self.seqs_path, seq_name, "1.jpg")
+            im1_path = os.path.join(self.seqs_path, seq_name, "1.ppm")
             im1 = Image.open(im1_path)
             w1, h1 = im1.size
             for im_idx in range(2, 7):
-                im2_path = os.path.join(self.seqs_path, seq_name, f"{im_idx}.jpg")
+                im2_path = os.path.join(self.seqs_path, seq_name, f"{im_idx}.ppm")
                 im2 = Image.open(im2_path)
                 w2, h2 = im2.size
                 H = np.loadtxt(
