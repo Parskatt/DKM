@@ -12,7 +12,15 @@ model = dkm_base(pretrained=True, version="v11")
 ```
 This creates a model, and loads pretrained weights.
 
+## Downloading Benchmarks
+### HPatches
+First, make sure that the "data/hpatches" path exists.
+Then run
+`` bash scripts/download_hpatches.sh``
+
+
 ## Evaluation
+### HPatches
 To evaluate on HPatches Homography Estimation, run:
 
 ``` python
