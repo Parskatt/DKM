@@ -41,3 +41,14 @@ homog_benchmark.benchmark_hpatches(model)
 
 ## Acknowledgement
 We have used code and been inspired by (among others) https://github.com/PruneTruong/DenseMatching , https://github.com/zju3dv/LoFTR , and https://github.com/GrumpyZhou/patch2pix  
+
+## BibTeX
+If you find our models useful, please consider citing our paper!
+```
+@article{edstedt2022deep,
+  title={Deep Kernelized Dense Geometric Matching},
+  author={Edstedt, Johan and Wadenb{\"a}ck, M{\aa}rten and Felsberg, Michael},
+  journal={arXiv preprint arXiv:2202.00667},
+  year={2022}
+}
+```
