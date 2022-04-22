@@ -72,26 +72,10 @@ class HpatchesHomogBenchmark:
                 H = np.loadtxt(
                     os.path.join(self.seqs_path, seq_name, "H_1_" + str(im_idx))
                 )
-                out = model.match(
+                dense_matches, dense_certainty = model.match(
                     im1, im2, check_cycle_consistency=True
                 )
-                matches, certainty = out["matches"], out["certainty"]
-                matches, certainty = (
-                    matches.reshape(-1, 4).cpu().numpy(),
-                    certainty.reshape(-1).cpu().numpy(),
-                )
-                matches, certainty = (
-                    matches[certainty > min(0.2, max(certainty) - 0.01)],
-                    certainty[certainty > min(0.2, max(certainty) - 0.01)],
-                )
-                good_samples = np.random.choice(
-                    np.arange(len(matches)),
-                    size=min(10000, (certainty > 0).sum()),
-                    replace=False,
-                    p=certainty / np.sum(certainty),
-                )
-                # best_2000 = np.argsort(certainty)[-2000:] # could maybe do better
-                good_matches = matches[good_samples]
+                good_matches, _ = model.sample(dense_matches, dense_certainty, 20000)
                 pos_a, pos_b = self.convert_coordinates(
                     good_matches[:, :2], good_matches[:, 2:], w1, h1, w2, h2
                 )

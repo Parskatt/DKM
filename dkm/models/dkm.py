@@ -625,6 +625,24 @@ class RegressionMatcher(nn.Module):
         X = torch.cat((x_q, x_s))
         feature_pyramid = self.encoder(X)
         return feature_pyramid
+    
+    def sample(self, dense_matches, dense_certainty, num = 20000, relative_confidence_threshold = 0.0):
+        matches, certainty = (
+            dense_matches.reshape(-1, 4).cpu().numpy(),
+            dense_certainty.reshape(-1).cpu().numpy(),
+        )
+        relative_confidence = certainty/certainty.max()
+        matches, certainty = (
+            matches[relative_confidence > relative_confidence_threshold],
+            certainty[relative_confidence > relative_confidence_threshold],
+        )
+        good_samples = np.random.choice(
+            np.arange(len(matches)),
+            size=min(num, len(certainty)),
+            replace=False,
+            p=certainty/np.sum(certainty),
+        )
+        return matches[good_samples], certainty[good_samples]
 
     def forward(self, batch):
         feature_pyramid = self.extract_backbone_features(batch)
@@ -746,12 +764,6 @@ class RegressionMatcher(nn.Module):
 
             query_to_support = torch.clamp(query_to_support, -1, 1)
             if batched:
-                return {
-                    "matches": torch.cat((query_coords, query_to_support), dim=-1),
-                    "certainty": dense_certainty[:, 0],
-                }
+                return torch.cat((query_coords, query_to_support), dim=-1), dense_certainty[:, 0]
             else:
-                return {
-                    "matches": torch.cat((query_coords, query_to_support), dim=-1)[0],
-                    "certainty": dense_certainty[0, 0],
-                }
+                return torch.cat((query_coords, query_to_support), dim=-1)[0], dense_certainty[0, 0]
