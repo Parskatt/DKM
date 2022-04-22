@@ -41,8 +41,8 @@ from dkm import dkm_base
 from PIL import Image
 model = dkm_base(pretrained=True, version="v11")
 im1, im2 = Image.open("im1.jpg"), Image.open("im2.jpg")
-# Note that matches 
-dense_matches = model.match(im1, im2)
+# Note that matches are produced in the normalized grid [-1, 1] x [-1, 1] 
+dense_matches, dense_certainty = model.match(im1, im2)
 sparse_matches, sparse_certainty = model.sample(dense_matches)
 ```
 ## Results 
