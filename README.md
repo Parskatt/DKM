@@ -14,8 +14,11 @@ This creates a model, and loads pretrained weights.
 
 ## Downloading Benchmarks
 ### HPatches
-First, make sure that the "data/hpatches" path exists.
-Then run
+First, make sure that the "data/hpatches" path exists. I usually prefer to do this by:
+
+`` ln -s place/where/your/datasets/are/stored/hpatches data/hpatches `` 
+
+Then run (if you don't already have hpatches downloaded)
 `` bash scripts/download_hpatches.sh``
 
 
