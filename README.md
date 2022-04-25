@@ -20,9 +20,19 @@ First, make sure that the "data/hpatches" path exists. I usually prefer to do th
 
 Then run (if you don't already have hpatches downloaded)
 `` bash scripts/download_hpatches.sh``
+### Yfcc100m (OANet Split)
+We use the split introduced by OANet, this split can be found from e.g. https://github.com/PruneTruong/DenseMatching
+### Megadepth (LoFTR Split)
+Currently we do not support the LoFTR split, as we trained on one of the scenes used there.
+Future releases may support this split, stay tuned.
+### Scannet (SuperGlue Split)
+We use the same split of scannet as superglue.
+LoFTR provides the split here: https://drive.google.com/drive/folders/1nTkK1485FuwqA0DbZrK2Cl0WnXadUZdc
 
 
 ## Evaluation
+Here we provide approximate performance numbers for DKM using this codebase.
+Note that the randomness involved in geometry estimation means that the numbers are not exact. (+- 0.5 typically)
 ### HPatches
 To evaluate on HPatches Homography Estimation, run:
 
@@ -50,10 +60,37 @@ sparse_matches, sparse_certainty = model.sample(dense_matches, dense_certainty, 
 
 ### HPatches Homography Estimation
 
-|| 3px | 5px | 10px |
+| | | AUC | |
 |-| ----------- | ----------- | --------- |
-| LoFTR | 65.9 | 75.6 | 84.6 |
-| DKM (Ours) | 71.2 | 80.6 | 88.7 |
+|| @3px | @5px | @10px |
+| LoFTR (ICCV'21) | 65.9 | 75.6 | 84.6 |
+| **DKM (Ours)** | **71.2** | **80.6** | **88.7** |
+
+
+### Scannet Pose Estimation
+Here we compare the performance on Scannet of models not trained on Scannet.
+| | |AUC| | |mAP| |
+|-| ----------- | ----------- | --------- | ----------- | ----------- | --------- |
+|| @5 | @10 | @20 | @5 | @10 | @20 |
+| SuperGlue (CVPR'20) | 16.16 | 33.81 | 51.84 | - | - | - |
+| LoFTR (ICCV'21) | 16.88 | 33.62 | 50.62 | - | - | - |
+| PDCNet (CVPR'21) | 17.70 | 35.02 | 51.75 | 39.93 | 50.17 | 60.87 |
+| PDCNet+ (Arxiv) |19.02 | 36.90 | 54.25 | 42.93 | 53.13 | 63.95|
+| **DKM (Ours)** | **22.3** | **42.0** | **60.2** | **48.4** | **59.5** | **70.3** |
+
+
+### Yfcc100m Pose Estimation
+Here we compare to recent methods using a single forward pass. 
+PDC-Net+ using multiple passes comes closer to our method, reaching AUC-5 of 37.51.
+However, comparing to that method is somewhat unfair as their inference is much slower.
+
+| | |AUC| | |mAP| |
+|-| ----------- | ----------- | --------- | ----------- | ----------- | --------- |
+|| @5 | @10 | @20 | @5 | @10 | @20 |
+| PDCNet (CVPR'21) | 32.21 | 52.61 | 70.13 | 60.52 | 70.91| 80.30 |
+| PDCNet+ (Arxiv) | 34.76 | 55.37 | 72.55 | 63.93 | 73.81 | 82.74 |
+| **DKM (Ours)** | **40.0** | **60.2** | **76.2** | **69.8** | **78.5** | **86.1** |
+
 
 ## TODO
 - [x] Add Model Code
