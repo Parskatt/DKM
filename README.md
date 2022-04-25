@@ -1,6 +1,7 @@
 # DKM - Deep Kernelized Dense Geometric Matching
 Contains code for "Deep Kernelized Dense Geometric Matching" (https://arxiv.org/abs/2202.00667)
-
+Note that the performance of current models is greater than in the pre-print. 
+This is due to continued development since submission.
 ## Install
 Run ``pip install -e .``
 
