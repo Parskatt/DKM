@@ -63,7 +63,7 @@ sparse_matches, sparse_certainty = model.sample(dense_matches, dense_certainty, 
 | | | AUC | |
 |-| ----------- | ----------- | --------- |
 || @3px | @5px | @10px |
-| LoFTR (ICCV'21) | 65.9 | 75.6 | 84.6 |
+| LoFTR (CVPR'21) | 65.9 | 75.6 | 84.6 |
 | **DKM (Ours)** | **71.2** | **80.6** | **88.7** |
 
 
@@ -73,7 +73,7 @@ Here we compare the performance on Scannet of models not trained on Scannet.
 |-| ----------- | ----------- | --------- | ----------- | ----------- | --------- |
 || @5 | @10 | @20 | @5 | @10 | @20 |
 | SuperGlue (CVPR'20) | 16.16 | 33.81 | 51.84 | - | - | - |
-| LoFTR (ICCV'21) | 16.88 | 33.62 | 50.62 | - | - | - |
+| LoFTR (CVPR'21) | 16.88 | 33.62 | 50.62 | - | - | - |
 | PDCNet (CVPR'21) | 17.70 | 35.02 | 51.75 | 39.93 | 50.17 | 60.87 |
 | PDCNet+ (Arxiv) |19.02 | 36.90 | 54.25 | 42.93 | 53.13 | 63.95|
 | **DKM (Ours)** | **22.3** | **42.0** | **60.2** | **48.4** | **59.5** | **70.3** |
