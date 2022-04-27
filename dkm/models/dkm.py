@@ -737,7 +737,7 @@ class RegressionMatcher(nn.Module):
 
             if do_pred_in_og_res:  # Will assume that there is no batching going on.
                 og_query, og_support = self.og_transforms((im1, im2))
-                query_to_support, dense_certainty = self.matcher.upsample_preds(
+                query_to_support, dense_certainty = self.decoder.upsample_preds(
                     query_to_support,
                     dense_certainty,
                     og_query.cuda()[None],
