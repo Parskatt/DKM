@@ -71,16 +71,17 @@ sparse_matches, sparse_certainty = model.sample(dense_matches, dense_certainty, 
 
 
 ### Scannet Pose Estimation
-Here we compare the performance on Scannet of models not trained on Scannet.
+Here we compare the performance on Scannet of models not trained on Scannet. (For reference we also include the version LoFTR specifically trained on Scannet) 
 | | |AUC| | |mAP| |
 |-| ----------- | ----------- | --------- | ----------- | ----------- | --------- |
 || @5 | @10 | @20 | @5 | @10 | @20 |
-| SuperGlue (CVPR'20) | 16.16 | 33.81 | 51.84 | - | - | - |
-| LoFTR (CVPR'21) | 16.88 | 33.62 | 50.62 | - | - | - |
-| PDCNet (CVPR'21) | 17.70 | 35.02 | 51.75 | 39.93 | 50.17 | 60.87 |
-| PDCNet+ (Arxiv) |19.02 | 36.90 | 54.25 | 42.93 | 53.13 | 63.95|
-| **DKM (Ours)** | **22.3** | **42.0** | **60.2** | **48.4** | **59.5** | **70.3** |
-| **DKM (Ours)** *Square root Confidence Sampling* | **22.9** | **43.6** | **61.4** | **51.2** | **62.1** | **72.0** |
+| SuperGlue (CVPR'20) *Trained on Megadepth*| 16.16 | 33.81 | 51.84 | - | - | - |
+| LoFTR (CVPR'21) *Trained on Megadepth*| 16.88 | 33.62 | 50.62 | - | - | - |
+| LoFTR (CVPR'21) *Trained on Scannet* | *22.06* | *40.8* | *57.62* | - | - | - |
+| PDCNet (CVPR'21) *Trained on Megadepth* | 17.70 | 35.02 | 51.75 | 39.93 | 50.17 | 60.87 |
+| PDCNet+ (Arxiv) *Trained on Megadepth*|19.02 | 36.90 | 54.25 | 42.93 | 53.13 | 63.95|
+| **DKM (Ours)** *Trained on Megadepth*| **22.3** | **42.0** | **60.2** | **48.4** | **59.5** | **70.3** |
+| **DKM (Ours)** *Trained on Megadepth* *Square root Confidence Sampling* | **22.9** | **43.6** | **61.4** | **51.2** | **62.1** | **72.0** |
 
 
 
