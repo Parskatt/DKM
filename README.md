@@ -55,6 +55,7 @@ model = dkm_base(pretrained=True, version="v11")
 im1, im2 = Image.open("im1.jpg"), Image.open("im2.jpg")
 # Note that matches are produced in the normalized grid [-1, 1] x [-1, 1] 
 dense_matches, dense_certainty = model.match(im1, im2)
+# You may want to process these, e.g. we found dense_certainty = dense_certainty.sqrt() to work quite well in some cases.
 # Sample 10000 sparse matches
 sparse_matches, sparse_certainty = model.sample(dense_matches, dense_certainty, 10000)
 ```
