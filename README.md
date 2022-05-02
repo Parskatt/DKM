@@ -16,7 +16,18 @@ from dkm import dkm_base
 model = dkm_base(pretrained=True, version="v11")
 ```
 This creates a model, and loads pretrained weights.
-
+## Running on your own images
+``` python
+from dkm import dkm_base
+from PIL import Image
+model = dkm_base(pretrained=True, version="v11")
+im1, im2 = Image.open("im1.jpg"), Image.open("im2.jpg")
+# Note that matches are produced in the normalized grid [-1, 1] x [-1, 1] 
+dense_matches, dense_certainty = model.match(im1, im2)
+# You may want to process these, e.g. we found dense_certainty = dense_certainty.sqrt() to work quite well in some cases.
+# Sample 10000 sparse matches
+sparse_matches, sparse_certainty = model.sample(dense_matches, dense_certainty, 10000)
+```
 ## Downloading Benchmarks
 ### HPatches
 First, make sure that the "data/hpatches" path exists. I usually prefer to do this by:
@@ -34,7 +45,6 @@ Future releases may support this split, stay tuned.
 We use the same split of scannet as superglue.
 LoFTR provides the split here: https://drive.google.com/drive/folders/1nTkK1485FuwqA0DbZrK2Cl0WnXadUZdc
 
-
 ## Evaluation
 Here we provide approximate performance numbers for DKM using this codebase.
 Note that the randomness involved in geometry estimation means that the numbers are not exact. (+- 0.5 typically)
@@ -50,18 +60,7 @@ homog_benchmark = HpatchesHomogBenchmark("data/hpatches")
 homog_benchmark.benchmark_hpatches(model)
 ```
 
-## Running on your own images
-``` python
-from dkm import dkm_base
-from PIL import Image
-model = dkm_base(pretrained=True, version="v11")
-im1, im2 = Image.open("im1.jpg"), Image.open("im2.jpg")
-# Note that matches are produced in the normalized grid [-1, 1] x [-1, 1] 
-dense_matches, dense_certainty = model.match(im1, im2)
-# You may want to process these, e.g. we found dense_certainty = dense_certainty.sqrt() to work quite well in some cases.
-# Sample 10000 sparse matches
-sparse_matches, sparse_certainty = model.sample(dense_matches, dense_certainty, 10000)
-```
+
 ## Results 
 
 ### HPatches Homography Estimation
