@@ -8,12 +8,6 @@ We additionally provide a simple demo where you can input any images you like.
 * Code for benchmarks can be found in dkm/benchmarks
 * Code for reproducing experiments from our paper can be found in experiments/
 
-
-We provide pretrained models and code for evaluation and running on your own images.
-We do not curently provide code for training models, but you can basically copy paste the model code into your own training framework and run it.
-
-Note that the performance of current models is greater than in the pre-print.
-This is due to continued development since submission.
 ## Install
 Run ``pip install -e .``
 
