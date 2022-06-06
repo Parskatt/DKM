@@ -9,18 +9,28 @@ import cv2
 
 
 class HpatchesHomogBenchmark:
-    """WARNING: HPATCHES grid goes from [0,n-1] instead of [0.5,n-0.5] hence all keypoints from our method must be subtracted with -0.5
-    #TODO OR DOES IT???
-    """
+    """Hpatches grid goes from [0,n-1] instead of [0.5,n-0.5]"""
 
     def __init__(self, dataset_path) -> None:
         seqs_dir = "hpatches-sequences-release"
         self.seqs_path = os.path.join(dataset_path, seqs_dir)
         self.seq_names = sorted(os.listdir(self.seqs_path))
+        # Ignore seqs is same as LoFTR.
+        self.ignore_seqs = set(
+            [
+                "i_contruction",
+                "i_crownnight",
+                "i_dc",
+                "i_pencils",
+                "i_whitebuilding",
+                "v_artisans",
+                "v_astronautis",
+                "v_talent",
+            ]
+        )
 
     def convert_coordinates(self, query_coords, query_to_support, wq, hq, wsup, hsup):
-        # Get matches in output format on the grid [0, n] where the center of the top-left coordinate is [0.5, 0.5]
-        offset = 0  # 0.5 # Hpatches assumes that the center of the top-left pixel is at [0,0]
+        offset = 0.5  # Hpatches assumes that the center of the top-left pixel is at [0,0] (I think)
         query_coords = (
             np.stack(
                 (
@@ -43,25 +53,14 @@ class HpatchesHomogBenchmark:
         )
         return query_coords, query_to_support
 
-    def scale_stuff(self, H, wq, hq, ws, hs, w=640, h=480):
-        scale_qw = wq / w
-        scale_qh = hq / h
-        scale_sw = ws / w
-        scale_sh = hs / h
-
-        Hq_inv = np.diag(np.array((1 / scale_qw, 1 / scale_qh, 1.0)))
-        Hs = np.diag(np.array((scale_sw, scale_sh, 1.0)))
-        H_scale = Hq_inv @ H @ Hs
-        return H_scale
-
-    def benchmark_hpatches(
-        self, model, ransac_thr=3.0
-    ):
+    def benchmark(self, model, r=2):
         n_matches = []
         homog_dists = []
         for seq_idx, seq_name in tqdm(
             enumerate(self.seq_names), total=len(self.seq_names)
         ):
+            if seq_name in self.ignore_seqs:
+                continue
             im1_path = os.path.join(self.seqs_path, seq_name, "1.ppm")
             im1 = Image.open(im1_path)
             w1, h1 = im1.size
@@ -73,9 +72,10 @@ class HpatchesHomogBenchmark:
                     os.path.join(self.seqs_path, seq_name, "H_1_" + str(im_idx))
                 )
                 dense_matches, dense_certainty = model.match(
-                    im1, im2, check_cycle_consistency=True
+                    im1, im2, do_pred_in_og_res=True
                 )
-                good_matches, _ = model.sample(dense_matches, dense_certainty, 20000)
+                dense_certainty = dense_certainty ** (1 / r)
+                good_matches, _ = model.sample(dense_matches, dense_certainty, 10000)
                 pos_a, pos_b = self.convert_coordinates(
                     good_matches[:, :2], good_matches[:, 2:], w1, h1, w2, h2
                 )
@@ -85,7 +85,7 @@ class HpatchesHomogBenchmark:
                         pos_b,
                         method=cv2.RANSAC,
                         confidence=0.99999,
-                        ransacReprojThreshold=ransac_thr * min(w2, h2) / 480,
+                        ransacReprojThreshold=3 * min(w2, h2) / 480,
                     )
                 except:
                     H_pred = None

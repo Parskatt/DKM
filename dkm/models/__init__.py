@@ -1,1 +1,7 @@
-from .build_model import dkm_base
+from .build_model import (
+    DKM,
+    local_corr,
+    corr_channels,
+    linear,
+    baseline,
+)

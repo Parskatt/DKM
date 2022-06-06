@@ -1,4 +1,8 @@
-MIT License
+NOTE! Models trained on our synthetic dataset uses datasets which are licensed under non-commercial licenses.
+Hence we cannot provide them under the MIT license. However, MegaDepth is under MIT license, hence we provide those models under MIT license, see below.
+
+
+License for Models Trained on MegaDepth ONLY below:
 
 Copyright (c) 2022 Johan Edstedt
 

@@ -3,119 +3,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torchvision import transforms
-from torchvision.transforms.functional import InterpolationMode
-
+from dkm.utils import get_tuple_transform_ops
 from einops import rearrange
-
-
-def get_tuple_transform_ops(resize=None, normalize=True, unscale=False):
-    ops = []
-    if resize:
-        ops.append(TupleResize(resize))
-    if normalize:
-        ops.append(TupleToTensorScaled())
-        ops.append(
-            TupleNormalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-        )  # Imagenet mean/std
-    else:
-        if unscale:
-            ops.append(TupleToTensorUnscaled())
-        else:
-            ops.append(TupleToTensorScaled())
-    return TupleCompose(ops)
-
-
-class ToTensorScaled(object):
-    """Convert a RGB PIL Image to a CHW ordered Tensor, scale the range to [0, 1]"""
-
-    def __call__(self, im):
-        if not isinstance(im, torch.Tensor):
-            im = np.array(im, dtype=np.float32).transpose((2, 0, 1))
-            im /= 255.0
-            return torch.from_numpy(im)
-        else:
-            return im
-
-    def __repr__(self):
-        return "ToTensorScaled(./255)"
-
-
-class TupleToTensorScaled(object):
-    def __init__(self):
-        self.to_tensor = ToTensorScaled()
-
-    def __call__(self, im_tuple):
-        return [self.to_tensor(im) for im in im_tuple]
-
-    def __repr__(self):
-        return "TupleToTensorScaled(./255)"
-
-
-class ToTensorUnscaled(object):
-    """Convert a RGB PIL Image to a CHW ordered Tensor"""
-
-    def __call__(self, im):
-        return torch.from_numpy(np.array(im, dtype=np.float32).transpose((2, 0, 1)))
-
-    def __repr__(self):
-        return "ToTensorUnscaled()"
-
-
-class TupleToTensorUnscaled(object):
-    """Convert a RGB PIL Image to a CHW ordered Tensor"""
-
-    def __init__(self):
-        self.to_tensor = ToTensorUnscaled()
-
-    def __call__(self, im_tuple):
-        return [self.to_tensor(im) for im in im_tuple]
-
-    def __repr__(self):
-        return "TupleToTensorUnscaled()"
-
-
-class TupleResize(object):
-    def __init__(self, size, mode=InterpolationMode.BICUBIC):
-        self.size = size
-        self.resize = transforms.Resize(size, mode)
-
-    def __call__(self, im_tuple):
-        return [self.resize(im) for im in im_tuple]
-
-    def __repr__(self):
-        return "TupleResize(size={})".format(self.size)
-
-
-class TupleNormalize(object):
-    def __init__(self, mean, std):
-        self.mean = mean
-        self.std = std
-        self.normalize = transforms.Normalize(mean=mean, std=std)
-
-    def __call__(self, im_tuple):
-        return [self.normalize(im) for im in im_tuple]
-
-    def __repr__(self):
-        return "TupleNormalize(mean={}, std={})".format(self.mean, self.std)
-
-
-class TupleCompose(object):
-    def __init__(self, transforms):
-        self.transforms = transforms
-
-    def __call__(self, im_tuple):
-        for t in self.transforms:
-            im_tuple = t(im_tuple)
-        return im_tuple
-
-    def __repr__(self):
-        format_string = self.__class__.__name__ + "("
-        for t in self.transforms:
-            format_string += "\n"
-            format_string += "    {0}".format(t)
-        format_string += "\n)"
-        return format_string
 
 
 class ConvRefiner(nn.Module):
@@ -124,17 +13,13 @@ class ConvRefiner(nn.Module):
         in_dim=6,
         hidden_dim=16,
         out_dim=2,
-        bicubic_gradients=False,
         dw=False,
-        residual=False,
-        groups=1,
         kernel_size=5,
         hidden_blocks=3,
-        weight_norm=False,
     ):
         super().__init__()
         self.block1 = self.create_block(
-            in_dim, hidden_dim, dw=dw, groups=groups, kernel_size=kernel_size
+            in_dim, hidden_dim, dw=dw, kernel_size=kernel_size
         )
         self.hidden_blocks = nn.Sequential(
             *[
@@ -142,16 +27,12 @@ class ConvRefiner(nn.Module):
                     hidden_dim,
                     hidden_dim,
                     dw=dw,
-                    groups=groups,
                     kernel_size=kernel_size,
-                    weight_norm=weight_norm,
                 )
                 for hb in range(hidden_blocks)
             ]
         )
         self.out_conv = nn.Conv2d(hidden_dim, out_dim, 1, 1, 0)
-        self.bicubic_gradients = bicubic_gradients
-        self.residual = residual
 
     def create_block(
         self,
@@ -159,9 +40,6 @@ class ConvRefiner(nn.Module):
         out_dim,
         dw=False,
         kernel_size=5,
-        groups=1,
-        residual=False,
-        weight_norm=False,
     ):
         num_groups = 1 if not dw else in_dim
         if dw:
@@ -192,13 +70,8 @@ class ConvRefiner(nn.Module):
         Returns:
             [type]: [description]
         """
-        if self.bicubic_gradients:
+        with torch.no_grad():
             x_hat = F.grid_sample(y, flow.permute(0, 2, 3, 1), align_corners=False)
-        else:
-            with torch.no_grad():
-                x_hat = F.grid_sample(
-                    y, flow.permute(0, 2, 3, 1), align_corners=False
-                )  # Propagating gradients through grid_sample seems to be unstable :/
         d = torch.cat((x, x_hat), dim=1)
         d = self.block1(d)
         d = self.hidden_blocks(d)
@@ -330,9 +203,7 @@ class DFN(nn.Module):
         feats = self.feat_input_modules[str(key)](feats)
         new_stuff = torch.cat([feats, new_stuff], dim=1)
         new_stuff = self.rrb_d[str(key)](new_stuff)
-        new_old_stuff = self.cab[str(key)](
-            [old_stuff, new_stuff]
-        )  # TODO: maybe use cab output upwards in network instead of rrb_u?
+        new_old_stuff = self.cab[str(key)]([old_stuff, new_stuff])
         new_old_stuff = self.rrb_u[str(key)](new_old_stuff)
         preds = self.terminal_module[str(key)](new_old_stuff)
         pred_coord = preds[:, -2:]
@@ -397,9 +268,11 @@ class GP(nn.Module):
     def project_to_basis(self, x):
         if self.basis == "fourier":
             return torch.cos(8 * math.pi * self.pos_conv(x))
+        elif self.basis == "linear":
+            return self.pos_conv(x)
         else:
             raise ValueError(
-                "No other bases other than fourier currently supported in public release"
+                "No other bases other than fourier and linear currently supported in public release"
             )
 
     def get_pos_enc(self, y):
@@ -451,7 +324,7 @@ class Encoder(nn.Module):
 
     def forward(self, x):
         x0 = x
-
+        b, c, h, w = x.shape
         x = self.resnet.conv1(x)
         x = self.resnet.bn1(x)
         x1 = self.resnet.relu(x)
@@ -464,12 +337,14 @@ class Encoder(nn.Module):
         x4 = self.resnet.layer3(x3)
 
         x5 = self.resnet.layer4(x4)
-
-        return {32: x5, 16: x4, 8: x3, 4: x2, 2: x1, 1: x0}
+        feats = {32: x5, 16: x4, 8: x3, 4: x2, 2: x1, 1: x0}
+        return feats
 
 
 class Decoder(nn.Module):
-    def __init__(self, embedding_decoder, gps, proj, conv_refiner, detach=False, scales="all"):
+    def __init__(
+        self, embedding_decoder, gps, proj, conv_refiner, detach=False, scales="all"
+    ):
         super().__init__()
         self.embedding_decoder = embedding_decoder
         self.gps = gps
@@ -492,20 +367,23 @@ class Decoder(nn.Module):
         flow = F.interpolate(
             flow, size=query.shape[-2:], align_corners=False, mode="bilinear"
         )
-        for k in range(3):
-            delta_certainty, delta_flow = self.conv_refiner["1"](query, support, flow)
-            boi = delta_certainty.sigmoid()
-            delta_flow = boi * delta_flow
-            flow = torch.stack(
-                (
-                    flow[:, 0] + delta_flow[:, 0] / (4 * w),
-                    flow[:, 1] + delta_flow[:, 1] / (4 * h),
-                ),
-                dim=1,
+        query_coords = torch.meshgrid(
+            (
+                torch.linspace(-1 + 1 / h, 1 - 1 / h, h, device="cuda:0"),
+                torch.linspace(-1 + 1 / w, 1 - 1 / w, w, device="cuda:0"),
             )
-            certainty = (
-                certainty + delta_certainty
-            )  # predict both certainty and displacement
+        )
+        query_coords = torch.stack((query_coords[1], query_coords[0]))
+        query_coords = query_coords[None].expand(b, 2, h, w)
+        delta_certainty, delta_flow = self.conv_refiner["1"](query, support, flow)
+        displaced_query_coords = torch.stack(
+            (
+                query_coords[:, 0] + delta_flow[:, 0] / (4 * w),
+                query_coords[:, 1] + delta_flow[:, 1] / (4 * h),
+            ),
+            dim=1,
+        )
+        flow = F.grid_sample(flow, displaced_query_coords.permute(0, 2, 3, 1))
         flow = flow.permute(0, 2, 3, 1)
         return flow, certainty
 
@@ -523,18 +401,6 @@ class Decoder(nn.Module):
         return coarse_coords
 
     def forward(self, f1, f2):
-        """[summary]
-
-        Args:
-            f1:
-            f2:
-        Returns:
-            dict:
-                scale (s32,s16,s8,s4,s2,s1):
-                    dense_flow: (b,n,h_scale,w_scale)
-                    dense_certainty: (b,h_scale,w_scale,2)
-
-        """
         coarse_scales = self.embedding_decoder.scales()
         all_scales = self.scales
         sizes = {scale: f1[scale].shape[-2:] for scale in f1}
@@ -565,9 +431,10 @@ class Decoder(nn.Module):
                 )
 
             if new_scale in self.conv_refiner:
+                hs, ws = h // ins, w // ins
                 delta_certainty, displacement = self.conv_refiner[new_scale](
                     f1_s, f2_s, dense_flow
-                )  # TODO: concat dense certainty?
+                )
                 dense_flow = torch.stack(
                     (
                         dense_flow[:, 0] + ins * displacement[:, 0] / (4 * w),
@@ -625,13 +492,19 @@ class RegressionMatcher(nn.Module):
         X = torch.cat((x_q, x_s))
         feature_pyramid = self.encoder(X)
         return feature_pyramid
-    
-    def sample(self, dense_matches, dense_certainty, num = 20000, relative_confidence_threshold = 0.0):
+
+    def sample(
+        self,
+        dense_matches,
+        dense_certainty,
+        num=20000,
+        relative_confidence_threshold=0.0,
+    ):
         matches, certainty = (
             dense_matches.reshape(-1, 4).cpu().numpy(),
             dense_certainty.reshape(-1).cpu().numpy(),
         )
-        relative_confidence = certainty/certainty.max()
+        relative_confidence = certainty / certainty.max()
         matches, certainty = (
             matches[relative_confidence > relative_confidence_threshold],
             certainty[relative_confidence > relative_confidence_threshold],
@@ -640,7 +513,7 @@ class RegressionMatcher(nn.Module):
             np.arange(len(matches)),
             size=min(num, len(certainty)),
             replace=False,
-            p=certainty/np.sum(certainty),
+            p=certainty / np.sum(certainty),
         )
         return matches[good_samples], certainty[good_samples]
 
@@ -683,8 +556,14 @@ class RegressionMatcher(nn.Module):
             ).permute(0, 2, 3, 1)
         d = (qts - _qts).norm(dim=-1)
         qd = (q - query_coords).norm(dim=1)
-        stabneigh = torch.logical_and(d < 1e-3, qd < 5e-3)
+        stabneigh = torch.logical_and(d < 1e-3, qd < 5e-3)  # Hello boy
         return q, qts, stabneigh
+
+    def nms(self, confidence, kernel_size=5):
+        return confidence * (
+            confidence
+            == F.max_pool2d(confidence, kernel_size, stride=1, padding=kernel_size // 2)
+        )
 
     def match(
         self,
@@ -711,7 +590,7 @@ class RegressionMatcher(nn.Module):
             else:
                 b, c, h, w = im1.shape
                 b, c, h2, w2 = im2.shape
-                assert w == w2 and h == h2, "wat"
+                assert w == w2 and h == h2, "For batched images we assume same size"
                 batch = {"query": im1.cuda(), "support": im2.cuda()}
                 hs, ws = self.h_resized, self.w_resized
             finest_scale = 1  # i will assume that we go to the finest scale (otherwise min(list(dense_corresps.keys())) also works)
@@ -724,9 +603,7 @@ class RegressionMatcher(nn.Module):
                 query_to_support = query_to_support.permute(0, 2, 3, 1)
                 dense_certainty, dc_s = dense_corresps[finest_scale][
                     "dense_certainty"
-                ].chunk(
-                    2
-                )  # TODO: Here we could also use the reverse certainty
+                ].chunk(2)
             else:
                 dense_corresps = self.forward(batch)
                 query_to_support = dense_corresps[finest_scale]["dense_flow"].permute(
@@ -747,8 +624,8 @@ class RegressionMatcher(nn.Module):
             # Create im1 meshgrid
             query_coords = torch.meshgrid(
                 (
-                    torch.linspace(-1 + 1 / hs, 1 - 1 / hs, hs, device="cuda:0"),
-                    torch.linspace(-1 + 1 / ws, 1 - 1 / ws, ws, device="cuda:0"),
+                    torch.linspace(-1 + 1 / hs, 1 - 1 / hs, hs, device="cuda"),
+                    torch.linspace(-1 + 1 / ws, 1 - 1 / ws, ws, device="cuda"),
                 )
             )
             query_coords = torch.stack((query_coords[1], query_coords[0]))
@@ -758,12 +635,17 @@ class RegressionMatcher(nn.Module):
                 query_coords, query_to_support, stabneigh = self.stable_neighbours(
                     query_coords, query_to_support, support_to_query
                 )
-                dense_certainty *= stabneigh.float() + 1e-3
-            # Return only matches better than threshold
+                dense_certainty = dense_certainty + (stabneigh.float() + 1e-5)
             query_coords = query_coords.permute(0, 2, 3, 1)
 
             query_to_support = torch.clamp(query_to_support, -1, 1)
             if batched:
-                return torch.cat((query_coords, query_to_support), dim=-1), dense_certainty[:, 0]
+                return (
+                    torch.cat((query_coords, query_to_support), dim=-1),
+                    dense_certainty[:, 0],
+                )
             else:
-                return torch.cat((query_coords, query_to_support), dim=-1)[0], dense_certainty[0, 0]
+                return (
+                    torch.cat((query_coords, query_to_support), dim=-1)[0],
+                    dense_certainty[0, 0],
+                )

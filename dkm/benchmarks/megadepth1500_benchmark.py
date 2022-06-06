@@ -1,5 +1,3 @@
-import pickle
-import h5py
 import numpy as np
 import torch
 from dkm.utils import *
@@ -7,78 +5,85 @@ from PIL import Image
 from tqdm import tqdm
 
 
-class Yfcc100mBenchmark:
-    def __init__(self, data_root="data/yfcc100m_test") -> None:
+class Megadepth1500Benchmark:
+    def __init__(self, data_root="data/megadepth") -> None:
+        self.scene_names = [
+            "0015_0.1_0.3.npz",
+            "0015_0.3_0.5.npz",
+            "0022_0.1_0.3.npz",
+            "0022_0.3_0.5.npz",
+            "0022_0.5_0.7.npz",
+        ]
         self.scenes = [
-            "buckingham_palace",
-            "notre_dame_front_facade",
-            "reichstag",
-            "sacre_coeur",
+            np.load(f"{data_root}/{scene}", allow_pickle=True)
+            for scene in self.scene_names
         ]
         self.data_root = data_root
 
     def benchmark(self, model, r=2):
-        model.train(False)
         with torch.no_grad():
             data_root = self.data_root
-            meta_info = open(
-                f"{data_root}/yfcc_test_pairs_with_gt.txt", "r"
-            ).readlines()
             tot_e_t, tot_e_R, tot_e_pose = [], [], []
             for scene_ind in range(len(self.scenes)):
                 scene = self.scenes[scene_ind]
-                pairs = np.array(
-                    pickle.load(
-                        open(f"{data_root}/pairs/{scene}-te-1000-pairs.pkl", "rb")
-                    )
-                )
-                scene_dir = f"{data_root}/yfcc100m/{scene}/test/"
-                calibs = open(scene_dir + "calibration.txt", "r").read().split("\n")
-                images = open(scene_dir + "images.txt", "r").read().split("\n")
-                pair_inds = np.random.choice(
-                    range(len(pairs)), size=len(pairs), replace=False
-                )
+                pairs = scene["pair_infos"]
+                intrinsics = scene["intrinsics"]
+                poses = scene["poses"]
+                im_paths = scene["image_paths"]
+                pair_inds = range(len(pairs))
                 for pairind in tqdm(pair_inds):
-                    idx1, idx2 = pairs[pairind]
-                    params = meta_info[1000 * scene_ind + pairind].split()
-                    rot1, rot2 = int(params[2]), int(params[3])
-                    calib1 = h5py.File(scene_dir + calibs[idx1], "r")
-                    K1, R1, t1, _, _ = get_pose(calib1)
-                    calib2 = h5py.File(scene_dir + calibs[idx2], "r")
-                    K2, R2, t2, _, _ = get_pose(calib2)
-
+                    idx1, idx2 = pairs[pairind][0]
+                    K1 = intrinsics[idx1]
+                    T1 = poses[idx1]
+                    R1, t1 = T1[:3, :3], T1[:3, 3]
+                    K2 = intrinsics[idx2]
+                    T2 = poses[idx2]
+                    R2, t2 = T2[:3, :3], T2[:3, 3]
                     R, t = compute_relative_pose(R1, t1, R2, t2)
-                    im1 = images[idx1]
-                    im2 = images[idx2]
-                    im1 = Image.open(scene_dir + im1).rotate(rot1 * 90, expand=True)
+                    im1 = im_paths[idx1]
+                    im2 = im_paths[idx2]
+                    im1 = Image.open(f"{data_root}/{im1}")
                     w1, h1 = im1.size
-                    im2 = Image.open(scene_dir + im2).rotate(rot2 * 90, expand=True)
+                    im2 = Image.open(f"{data_root}/{im2}")
                     w2, h2 = im2.size
-                    K1 = rotate_intrinsic(K1, rot1)
-                    K2 = rotate_intrinsic(K2, rot2)
-
-                    dense_matches, dense_certainty = model.match(im1, im2)
+                    dense_matches, dense_certainty = model.match(
+                        im1, im2, do_pred_in_og_res=True
+                    )
                     dense_certainty = dense_certainty ** (1 / r)
                     sparse_matches, sparse_confidence = model.sample(
                         dense_matches, dense_certainty, 10000
                     )
-                    scale1 = 480 / min(w1, h1)
-                    scale2 = 480 / min(w2, h2)
+                    scale1 = 1200 / max(w1, h1)
+                    scale2 = 1200 / max(w2, h2)
                     w1, h1 = scale1 * w1, scale1 * h1
                     w2, h2 = scale2 * w2, scale2 * h2
                     K1 = K1 * scale1
                     K2 = K2 * scale2
 
                     kpts1 = sparse_matches[:, :2]
-                    kpts1 = np.stack(
-                        (w1 * kpts1[:, 0] / 2, h1 * kpts1[:, 1] / 2), axis=-1
+                    kpts1 = (
+                        np.stack(
+                            (
+                                w1 * (kpts1[:, 0] + 1) / 2,
+                                h1 * (kpts1[:, 1] + 1) / 2,
+                            ),
+                            axis=-1,
+                        )
+                        - K1[None, :2, 2]
                     )
                     kpts2 = sparse_matches[:, 2:]
-                    kpts2 = np.stack(
-                        (w2 * kpts2[:, 0] / 2, h2 * kpts2[:, 1] / 2), axis=-1
+                    kpts2 = (
+                        np.stack(
+                            (
+                                w2 * (kpts2[:, 0] + 1) / 2,
+                                h2 * (kpts2[:, 1] + 1) / 2,
+                            ),
+                            axis=-1,
+                        )
+                        - K2[None, :2, 2]
                     )
                     try:
-                        threshold = 1.0
+                        threshold = 0.5
                         norm_threshold = threshold / (
                             np.mean(np.abs(K1[:2, :2])) + np.mean(np.abs(K2[:2, :2]))
                         )
