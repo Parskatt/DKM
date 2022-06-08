@@ -1,5 +1,5 @@
 # DKM - Deep Kernelized Dense Geometric Matching
-Contains code for [*Deep Kernelized Dense Geometric Matching*](https://arxiv.org/abs/2202.00667) **NOTE**: Updated preprint coming soon!
+Contains code for [*Deep Kernelized Dense Geometric Matching*](https://arxiv.org/abs/2202.00667) **NOTE**: Updated preprint is out!
 We provide pretrained models, evaluation scripts, and dataset download instructions for reproducing our results.
 We additionally provide a simple demo where you can input any images you like.
 
