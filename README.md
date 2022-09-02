@@ -1,5 +1,20 @@
 # DKM - Deep Kernelized Dense Geometric Matching
-Contains code for [*Deep Kernelized Dense Geometric Matching*](https://arxiv.org/abs/2202.00667) **NOTE**: Updated preprint is out!
+Contains code for [*Deep Kernelized Dense Geometric Matching*](https://arxiv.org/abs/2202.00667) 
+
+⚡ **DKMv2 is out, with improved result on ScanNet1500 and MegaDepth1500**!
+### Megadepth1500
+|       | @5    | @10  | @20  |
+|-------|-------|------|------|
+| DKMv1 | 54.5  | 70.7 | 82.3 |
+| DKMv2 | **55.3**  | **71.1** | **82.5** |
+
+### ScanNet1500
+|       | @5    | @10  | @20  |
+|-------|-------|------|------|
+| DKMv1 | 24.8  | 44.4 | 61.9 |
+| DKMv2 | **28.2**  | **49.2** | **66.6** |
+
+
 We provide pretrained models, evaluation scripts, and dataset download instructions for reproducing our results.
 We additionally provide a simple demo where you can input any images you like.
 
