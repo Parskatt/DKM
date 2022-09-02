@@ -16,6 +16,8 @@ class ConvRefiner(nn.Module):
         dw=False,
         kernel_size=5,
         hidden_blocks=3,
+        displacement_emb = None,
+        displacement_emb_dim = None,
     ):
         super().__init__()
         self.block1 = self.create_block(
@@ -33,6 +35,11 @@ class ConvRefiner(nn.Module):
             ]
         )
         self.out_conv = nn.Conv2d(hidden_dim, out_dim, 1, 1, 0)
+        if displacement_emb:
+            self.has_displacement_emb = True
+            self.disp_emb = nn.Conv2d(2,displacement_emb_dim,1,1,0)
+        else:
+            self.has_displacement_emb = False
 
     def create_block(
         self,
@@ -70,9 +77,23 @@ class ConvRefiner(nn.Module):
         Returns:
             [type]: [description]
         """
+        b,c,hs,ws = x.shape
         with torch.no_grad():
             x_hat = F.grid_sample(y, flow.permute(0, 2, 3, 1), align_corners=False)
-        d = torch.cat((x, x_hat), dim=1)
+        if self.has_displacement_emb:
+            query_coords = torch.meshgrid(
+            (
+                torch.linspace(-1 + 1 / hs, 1 - 1 / hs, hs, device="cuda"),
+                torch.linspace(-1 + 1 / ws, 1 - 1 / ws, ws, device="cuda"),
+            )
+            )
+            query_coords = torch.stack((query_coords[1], query_coords[0]))
+            query_coords = query_coords[None].expand(b, 2, hs, ws)
+            in_displacement = flow-query_coords
+            emb_in_displacement = self.disp_emb(in_displacement)
+            d = torch.cat((x, x_hat, emb_in_displacement), dim=1)
+        else:  
+            d = torch.cat((x, x_hat), dim=1)
         d = self.block1(d)
         d = self.hidden_blocks(d)
         d = self.out_conv(d)

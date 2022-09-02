@@ -10,10 +10,10 @@ dkm_pretrained_urls = {
         "mega_synthetic": "https://github.com/Parskatt/storage/releases/download/dkm_mega_synthetic/dkm_mega_synthetic.pth",
         "mega": "https://github.com/Parskatt/storage/releases/download/dkm_mega/dkm_mega.pth",
     },
-    "local_corr": {"mega_synthetic": ""},
-    "corr_channels": {"mega_synthetic": ""},
-    "baseline": {"mega_synthetic": ""},
-    "linear": {"mega_synthetic": ""},
+    "DKMv2":{
+        "outdoor": "https://github.com/Parskatt/storage/releases/download/dkmv2/dkm_v2_outdoor.pth",
+        "indoor": "https://github.com/Parskatt/storage/releases/download/dkmv2/dkm_v2_indoor.pth",
+    }
 }
 
 
@@ -145,6 +145,156 @@ def DKM(pretrained=True, version="mega_synthetic"):
         weights = torch.hub.load_state_dict_from_url(
             dkm_pretrained_urls["DKM"][version]
         )
+        matcher.load_state_dict(weights)
+    return matcher
+
+def DKMv2(pretrained=True, version="outdoor", resolution = "low", **kwargs):
+    gp_dim = 256
+    dfn_dim = 384
+    feat_dim = 256
+    coordinate_decoder = DFN(
+        internal_dim=dfn_dim,
+        feat_input_modules=nn.ModuleDict(
+            {
+                "32": nn.Conv2d(512, feat_dim, 1, 1),
+                "16": nn.Conv2d(512, feat_dim, 1, 1),
+            }
+        ),
+        pred_input_modules=nn.ModuleDict(
+            {
+                "32": nn.Identity(),
+                "16": nn.Identity(),
+            }
+        ),
+        rrb_d_dict=nn.ModuleDict(
+            {
+                "32": RRB(gp_dim + feat_dim, dfn_dim),
+                "16": RRB(gp_dim + feat_dim, dfn_dim),
+            }
+        ),
+        cab_dict=nn.ModuleDict(
+            {
+                "32": CAB(2 * dfn_dim, dfn_dim),
+                "16": CAB(2 * dfn_dim, dfn_dim),
+            }
+        ),
+        rrb_u_dict=nn.ModuleDict(
+            {
+                "32": RRB(dfn_dim, dfn_dim),
+                "16": RRB(dfn_dim, dfn_dim),
+            }
+        ),
+        terminal_module=nn.ModuleDict(
+            {
+                "32": nn.Conv2d(dfn_dim, 3, 1, 1, 0),
+                "16": nn.Conv2d(dfn_dim, 3, 1, 1, 0),
+            }
+        ),
+    )
+    dw = True
+    hidden_blocks = 8
+    kernel_size = 5
+    displacement_emb = "linear"
+    conv_refiner = nn.ModuleDict(
+        {
+            "16": ConvRefiner(
+                2 * 512+128,
+                1024+128,
+                3,
+                kernel_size=kernel_size,
+                dw=dw,
+                hidden_blocks=hidden_blocks,
+                displacement_emb=displacement_emb,
+                displacement_emb_dim=128,
+            ),
+            "8": ConvRefiner(
+                2 * 512+64,
+                1024+64,
+                3,
+                kernel_size=kernel_size,
+                dw=dw,
+                hidden_blocks=hidden_blocks,
+                displacement_emb=displacement_emb,
+                displacement_emb_dim=64,
+            ),
+            "4": ConvRefiner(
+                2 * 256+32,
+                512+32,
+                3,
+                kernel_size=kernel_size,
+                dw=dw,
+                hidden_blocks=hidden_blocks,
+                displacement_emb=displacement_emb,
+                displacement_emb_dim=32,
+            ),
+            "2": ConvRefiner(
+                2 * 64+16,
+                128+16,
+                3,
+                kernel_size=kernel_size,
+                dw=dw,
+                hidden_blocks=hidden_blocks,
+                displacement_emb=displacement_emb,
+                displacement_emb_dim=16,
+            ),
+            "1": ConvRefiner(
+                2 * 3+6,
+                24,
+                3,
+                kernel_size=kernel_size,
+                dw=dw,
+                hidden_blocks=hidden_blocks,
+                displacement_emb=displacement_emb,
+                displacement_emb_dim=6,
+            ),
+        }
+    )
+    kernel_temperature = 0.2
+    learn_temperature = False
+    no_cov = True
+    kernel = CosKernel
+    only_attention = False
+    basis = "fourier"
+    gp32 = GP(
+        kernel,
+        T=kernel_temperature,
+        learn_temperature=learn_temperature,
+        only_attention=only_attention,
+        gp_dim=gp_dim,
+        basis=basis,
+        no_cov=no_cov,
+    )
+    gp16 = GP(
+        kernel,
+        T=kernel_temperature,
+        learn_temperature=learn_temperature,
+        only_attention=only_attention,
+        gp_dim=gp_dim,
+        basis=basis,
+        no_cov=no_cov,
+    )
+    gps = nn.ModuleDict({"32": gp32, "16": gp16})
+    proj = nn.ModuleDict(
+        {"16": nn.Conv2d(1024, 512, 1, 1), "32": nn.Conv2d(2048, 512, 1, 1)}
+    )
+    decoder = Decoder(coordinate_decoder, gps, proj, conv_refiner, detach=True)
+    if resolution == "low":
+        h, w = 384, 512
+    elif resolution == "high":
+        h, w = 672, 896
+    encoder = Encoder(
+        tv_resnet.resnet50(pretrained=not pretrained),
+    )  # only load pretrained weights if not loading a pretrained matcher ;)
+    matcher = RegressionMatcher(encoder, decoder, h=h, w=w,**kwargs).cuda()
+    if pretrained:
+        try:
+            weights = torch.hub.load_state_dict_from_url(
+                dkm_pretrained_urls["DKMv2"][version]
+            )
+        except:
+            weights = torch.load(
+                dkm_pretrained_urls["DKMv2"][version]
+            )
         matcher.load_state_dict(weights)
     return matcher
 

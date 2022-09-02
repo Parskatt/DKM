@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from dkm import (
-    DKM,
+    DKMv2,
 )
 from dkm.benchmarks import (
     Megadepth1500Benchmark,
@@ -12,7 +12,7 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--r", type=float, default=2)
     args, _ = parser.parse_known_args()
-    model = DKM(pretrained=True, version="mega")
+    model = DKMv2(pretrained=True, version="outdoor")
     megaloftr_benchmark = Megadepth1500Benchmark("data/megadepth")
     megaloftr_results = []
     r = args.r
