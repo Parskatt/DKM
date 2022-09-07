@@ -1,12 +1,12 @@
 from PIL import Image
 import torch
 import torch.nn.functional as F
-from dkm import DKM
+from dkm import DKMv2
 from dkm.utils.utils import tensor_to_pil
 import cv2
 from torchvision import transforms
 
-dkm_model = DKM(pretrained=True, version="mega")
+dkm_model = DKMv2(pretrained=True, version="outdoor")
 
 im1 = Image.open(f"assets/ams_hom_left.jpg").resize((512, 384))
 im2 = Image.open(f"assets/ams_hom_right.jpg").resize((512, 384))

@@ -9,14 +9,14 @@ from torch.utils.data import ConcatDataset
 
 from dkm.train.train import train_k_steps
 from dkm.checkpointing.checkpoint import CheckPoint
-from dkm import DKM
+from dkm import DKMv2
 
 
 def run(gpus=1):
     experiment_name = os.path.splitext(os.path.basename(__file__))[0]
     checkpoint_dir = "workspace/checkpoints"
     h, w = 384, 512
-    model = DKM(
+    model = DKMv2(
         pretrained=False,
     )
     # Num steps

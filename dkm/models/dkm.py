@@ -360,7 +360,13 @@ class Encoder(nn.Module):
         x5 = self.resnet.layer4(x4)
         feats = {32: x5, 16: x4, 8: x3, 4: x2, 2: x1, 1: x0}
         return feats
-
+    
+    def train(self, mode=True):
+        super().train(mode)
+        for m in self.modules():
+            if isinstance(m, nn.BatchNorm2d):
+                m.eval()
+            pass
 
 class Decoder(nn.Module):
     def __init__(
