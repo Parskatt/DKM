@@ -14,9 +14,8 @@ Contains code for [*Deep Kernelized Dense Geometric Matching*](https://arxiv.org
 | DKMv1 | 24.8  | 44.4 | 61.9 |
 | DKMv2 | **28.2**  | **49.2** | **66.6** |
 
-
-We provide pretrained models, evaluation scripts, and dataset download instructions for reproducing our results.
-We additionally provide a simple demo where you can input any images you like.
+## TODO
+- [ ] Provide updated training and higher resolution options for DKMv2
 
 ## Navigating the Code
 * Code for models can be found in dkm/models
