@@ -6,7 +6,7 @@ Contains code for [*Deep Kernelized Dense Geometric Matching*](https://arxiv.org
 |       | @5    | @10  | @20  |
 |-------|-------|------|------|
 | DKMv1 | 54.5  | 70.7 | 82.3 |
-| DKMv2 | **55.3**  | **71.1** | **82.5** |
+| DKMv2 | **56.8**  | **72.3** | **83.2** |
 
 ### ScanNet1500
 |       | @5    | @10  | @20  |
