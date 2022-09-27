@@ -394,24 +394,14 @@ class Decoder(nn.Module):
         flow = F.interpolate(
             flow, size=query.shape[-2:], align_corners=False, mode="bilinear"
         )
-        query_coords = torch.meshgrid(
-            (
-                torch.linspace(-1 + 1 / h, 1 - 1 / h, h, device="cuda:0"),
-                torch.linspace(-1 + 1 / w, 1 - 1 / w, w, device="cuda:0"),
-            )
-        )
-        query_coords = torch.stack((query_coords[1], query_coords[0]))
-        query_coords = query_coords[None].expand(b, 2, h, w)
         delta_certainty, delta_flow = self.conv_refiner["1"](query, support, flow)
-        displaced_query_coords = torch.stack(
-            (
-                query_coords[:, 0] + delta_flow[:, 0] / (4 * w),
-                query_coords[:, 1] + delta_flow[:, 1] / (4 * h),
-            ),
-            dim=1,
-        )
-        flow = F.grid_sample(flow, displaced_query_coords.permute(0, 2, 3, 1))
-        flow = flow.permute(0, 2, 3, 1)
+        flow = torch.stack(
+                (
+                    flow[:, 0] + delta_flow[:, 0] / (4 * w),
+                    flow[:, 1] + delta_flow[:, 1] / (4 * h),
+                ),
+                dim=1,
+            )
         return flow, certainty
 
     def get_placeholder_flow(self, b, h, w, device):
