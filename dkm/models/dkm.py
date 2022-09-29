@@ -516,11 +516,13 @@ class RegressionMatcher(nn.Module):
         dense_certainty,
         num=20000,
         relative_confidence_threshold=0.0,
+        conf_thresh = 0.1,
     ):
         matches, certainty = (
             dense_matches.reshape(-1, 4).cpu().numpy(),
             dense_certainty.reshape(-1).cpu().numpy(),
         )
+        certainty[certainty > conf_thresh] = 1 
         relative_confidence = certainty / certainty.max()
         matches, certainty = (
             matches[relative_confidence > relative_confidence_threshold],
@@ -612,22 +614,12 @@ class RegressionMatcher(nn.Module):
                 hs, ws = self.h_resized, self.w_resized
             finest_scale = 1  # i will assume that we go to the finest scale (otherwise min(list(dense_corresps.keys())) also works)
             # Run matcher
-            if check_cycle_consistency:
-                dense_corresps = self.forward_symmetric(batch)
-                query_to_support, support_to_query = dense_corresps[finest_scale][
-                    "dense_flow"
-                ].chunk(2)
-                query_to_support = query_to_support.permute(0, 2, 3, 1)
-                dense_certainty, dc_s = dense_corresps[finest_scale][
-                    "dense_certainty"
-                ].chunk(2)
-            else:
-                dense_corresps = self.forward(batch)
-                query_to_support = dense_corresps[finest_scale]["dense_flow"].permute(
-                    0, 2, 3, 1
-                )
-                # Get certainty interpolation
-                dense_certainty = dense_corresps[finest_scale]["dense_certainty"]
+            dense_corresps = self.forward(batch)
+            query_to_support = dense_corresps[finest_scale]["dense_flow"].permute(
+                0, 2, 3, 1
+            )
+            # Get certainty interpolation
+            dense_certainty = dense_corresps[finest_scale]["dense_certainty"]
 
             if do_pred_in_og_res:  # Will assume that there is no batching going on.
                 og_query, og_support = self.og_transforms((im1, im2))
@@ -638,6 +630,7 @@ class RegressionMatcher(nn.Module):
                     og_support.cuda()[None],
                 )
                 hs, ws = h, w
+                query_to_support = query_to_support.permute(0, 2, 3, 1)
             # Create im1 meshgrid
             query_coords = torch.meshgrid(
                 (
@@ -648,11 +641,6 @@ class RegressionMatcher(nn.Module):
             query_coords = torch.stack((query_coords[1], query_coords[0]))
             query_coords = query_coords[None].expand(b, 2, hs, ws)
             dense_certainty = dense_certainty.sigmoid()  # logits -> probs
-            if check_cycle_consistency:
-                query_coords, query_to_support, stabneigh = self.stable_neighbours(
-                    query_coords, query_to_support, support_to_query
-                )
-                dense_certainty = dense_certainty + (stabneigh.float() + 1e-5)
             query_coords = query_coords.permute(0, 2, 3, 1)
 
             query_to_support = torch.clamp(query_to_support, -1, 1)

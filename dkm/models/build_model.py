@@ -281,7 +281,7 @@ def DKMv2(pretrained=True, version="outdoor", resolution = "low", **kwargs):
     if resolution == "low":
         h, w = 384, 512
     elif resolution == "high":
-        h, w = 672, 896
+        h, w = 480, 640
     encoder = Encoder(
         tv_resnet.resnet50(pretrained=not pretrained),
     )  # only load pretrained weights if not loading a pretrained matcher ;)

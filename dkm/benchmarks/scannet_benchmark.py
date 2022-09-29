@@ -10,7 +10,7 @@ class ScanNetBenchmark:
     def __init__(self, data_root="data/scannet") -> None:
         self.data_root = data_root
 
-    def benchmark(self, model, r=2, thr=0.5):
+    def benchmark(self, model, r=2):
         model.train(False)
         with torch.no_grad():
             data_root = self.data_root
@@ -101,7 +101,7 @@ class ScanNetBenchmark:
                     - K2[None, :2, 2]
                 )
                 try:
-                    threshold = thr
+                    threshold = 0.5
                     norm_threshold = threshold / (
                         np.mean(K1[:2, :2]) + np.mean(K2[:2, :2])
                     )
