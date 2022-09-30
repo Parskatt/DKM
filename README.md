@@ -1,6 +1,8 @@
 # DKM - Deep Kernelized Dense Geometric Matching
 Contains code for [*Deep Kernelized Dense Geometric Matching*](https://arxiv.org/abs/2202.00667) 
 
+**Note** The code in this repo is in active development, and the api may change without notice.
+
 ⚡ **DKMv2 is out, with improved result on ScanNet1500 and MegaDepth1500**!
 ### Megadepth1500
 |       | @5    | @10  | @20  |
