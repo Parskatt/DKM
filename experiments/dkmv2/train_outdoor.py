@@ -40,8 +40,8 @@ def run(gpus=1):
     depth_loss = DepthRegressionLoss(ce_weight=0.01)
 
     parameters = [
-        {"params": model.encoder.parameters(), "lr": gpus * 1e-4},
-        {"params": model.decoder.parameters(), "lr": gpus * 1e-6},
+        {"params": model.encoder.parameters(), "lr": gpus * 1e-6},
+        {"params": model.decoder.parameters(), "lr": gpus * 1e-4},
     ]
     optimizer = torch.optim.AdamW(parameters, weight_decay=0.01)
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(
