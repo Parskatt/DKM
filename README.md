@@ -1,4 +1,7 @@
 # DKM: Dense Kernelized Feature Matching for Geometry Estimation
+<img src="assets/dkmv3_warp.jpg" alt="DKMv3 warp" width="800"/>
+
+
 Contains code for [*DKM: Dense Kernelized Feature Matching for Geometry Estimation*](https://arxiv.org/abs/2202.00667) 
 
 **Note** The code in this repo is in active development, and the api may change without notice.
