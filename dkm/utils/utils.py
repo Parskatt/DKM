@@ -11,11 +11,11 @@ from PIL import Image
 def estimate_pose(kpts0, kpts1, K0, K1, norm_thresh, conf=0.99999):
     if len(kpts0) < 5:
         return None
-    K0inv = np.linalg.inv(K0)
-    K1inv = np.linalg.inv(K1)
+    K0inv = np.linalg.inv(K0[:2,:2])
+    K1inv = np.linalg.inv(K1[:2,:2])
 
-    kpts0 = (K0inv @ kpts0.T).T
-    kpts1 = (K1inv @ kpts1.T).T
+    kpts0 = (K0inv @ (kpts0-K0[None,:2,2]).T).T 
+    kpts1 = (K1inv @ (kpts1-K1[None,:2,2]).T).T
 
     E, mask = cv2.findEssentialMat(
         kpts0, kpts1, np.eye(3), threshold=norm_thresh, prob=conf, method=cv2.RANSAC

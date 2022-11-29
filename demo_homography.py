@@ -6,6 +6,7 @@ from dkm.utils.utils import tensor_to_pil
 import cv2
 from torchvision import transforms
 
+raise DeprecationWarning("Old demo, not usable at the moment")
 dkm_model = DKMv2(pretrained=True, version="outdoor")
 
 im1 = Image.open(f"assets/ams_hom_left.jpg").resize((512, 384))

@@ -5,7 +5,7 @@ import numpy as np
 from dkm import DKMv2
 from dkm.utils.utils import tensor_to_pil
 
-
+raise DeprecationWarning("Old demo, not usable at the moment")
 dkm_model = DKMv2(pretrained=True, version="outdoor")
 
 im1 = Image.open(f"assets/sacre_coeur_multimodal_query.jpg").resize((512, 384))

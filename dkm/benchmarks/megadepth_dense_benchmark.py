@@ -7,11 +7,12 @@ from torch.utils.data import ConcatDataset
 
 
 class MegadepthDenseBenchmark:
-    def __init__(self, data_root="data/megadepth") -> None:
+    def __init__(self, data_root="data/megadepth", h = 384, w = 512, num_samples = 2000) -> None:
         mega = MegadepthBuilder(data_root=data_root)
         self.dataset = ConcatDataset(
-            mega.build_scenes(split="test", ht=384, wt=512)
+            mega.build_scenes(split="test_loftr", ht=h, wt=w)
         )  # fixed resolution of 384,512
+        self.num_samples = num_samples
 
     def geometric_dist(self, depth1, depth2, T_1to2, K1, K2, dense_matches):
         b, h1, w1, d = dense_matches.shape
@@ -50,7 +51,7 @@ class MegadepthDenseBenchmark:
             pck_3_tot = 0.0
             pck_5_tot = 0.0
             sampler = torch.utils.data.WeightedRandomSampler(
-                torch.ones(len(self.dataset)), replacement=False, num_samples=3000
+                torch.ones(len(self.dataset)), replacement=False, num_samples=self.num_samples
             )
             dataloader = torch.utils.data.DataLoader(
                 self.dataset, batch_size=8, num_workers=batch_size, sampler=sampler

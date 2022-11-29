@@ -1,4 +1,5 @@
 Here we provide instructions for how to train our models, including download of datasets.
+
 ### MegaDepth
 First the MegaDepth dataset needs to be downloaded and preprocessed. This can be done by the following steps:
 1. Download MegaDepth from here: https://www.cs.cornell.edu/projects/megadepth/
@@ -7,17 +8,14 @@ First the MegaDepth dataset needs to be downloaded and preprocessed. This can be
 4. File structure should be data/megadepth/phoenix, data/megadepth/Undistorted_SfM, data/megadepth/prep_scene_info.
 Then run 
 ``` bash
-python experiments/train_mega.py --gpus 4
+python experiments/dkmv3/train_DKMv3_outdoor.py --gpus 4
 ```
 
-### MegaDepth + Synthetic
-First do the above steps.
-For the synthetic dataset, we used CityScapes, ADE20k, and COCO2014.
-
-1. Download Cityscapes(leftImg8bit), ADE20k, and COCO2014 and untar them directly in data/homog_data. This should give you a COCO2014, leftImg8bit, and ADE20K_2016_07_26 folder. In the same place should also be the ade20k_filenames.json and ade20k_folders.json.
-
-``` bash
-python experiments/train_mega_synthetic.py --gpus 4
-```
 ## Megadepth + Scannet
-TODO
+First follow the steps outlined above.
+Then, see https://github.com/zju3dv/LoFTR/blob/master/docs/TRAINING.md
+
+Then run 
+``` bash
+python experiments/dkmv3/train_DKMv3_indoor.py --gpus 4
+```
