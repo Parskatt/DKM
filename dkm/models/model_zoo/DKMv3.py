@@ -144,5 +144,5 @@ def DKMv3(weights, h, w, symmetric = True, sample_mode= "threshold_balanced", **
         
     encoder = ResNet50(pretrained = True, high_res = False, freeze_bn=False)
     matcher = RegressionMatcher(encoder, decoder, h=h, w=w, name = "DKMv3", sample_mode=sample_mode, symmetric = symmetric, **kwargs).cuda()
-    res = matcher.load_state_dict(torch.load(weights))
+    res = matcher.load_state_dict(weights)
     return matcher

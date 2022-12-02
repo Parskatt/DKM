@@ -2,24 +2,45 @@ from PIL import Image
 import torch
 import torch.nn.functional as F
 import numpy as np
-from dkm import DKMv2
 from dkm.utils.utils import tensor_to_pil
 
-raise DeprecationWarning("Old demo, not usable at the moment")
-dkm_model = DKMv2(pretrained=True, version="outdoor")
+from dkm.models.model_zoo import DKMv3_outdoor
 
-im1 = Image.open(f"assets/sacre_coeur_multimodal_query.jpg").resize((512, 384))
-im2 = Image.open(f"assets/sacre_coeur_multimodal_support.jpg").resize((512, 384))
-im1.save(f"demo/sacre_coeur_query.jpg")
-im2.save(f"demo/sacre_coeur_support.jpg")
-flow, confidence = dkm_model.match(im1, im2)
-confidence = confidence ** (1 / 2)
-c_b = confidence / confidence.max()
-x2 = (torch.tensor(np.array(im2)) / 255).cuda().permute(2, 0, 1)
-im2_transfer_rgb = F.grid_sample(
-    x2[None], flow[..., 2:][None], mode="bicubic", align_corners=False
-)[0]
-white_im = torch.ones_like(x2)
-tensor_to_pil(c_b * im2_transfer_rgb + (1 - c_b) * white_im, unnormalize=False).save(
-    f"demo/sacre_coeur_warped.jpg"
-)
+if __name__ == "__main__":
+    from argparse import ArgumentParser
+    parser = ArgumentParser()
+    parser.add_argument("--im_A_path", default="assets/sacre_coeur_A.jpg", type=str)
+    parser.add_argument("--im_B_path", default="assets/sacre_coeur_B.jpg", type=str)
+    parser.add_argument("--save_path", default="demo/dkmv3_warp_sacre_coeur.jpg", type=str)
+    
+    args, _ = parser.parse_known_args()
+    im1_path = args.im_A_path
+    im2_path = args.im_A_path
+    save_path = args.save_path
+    
+    # Create model
+    dkm_model = DKMv3_outdoor()
+
+    H, W = 864, 1152
+
+    im1 = Image.open(im1_path).resize((W, H))
+    im2 = Image.open(im2_path).resize((W, H))
+    
+    # Match
+    warp, certainty = dkm_model.match(im1_path, im2_path)
+    # Sampling not needed, but can be done with model.sample(warp, certainty)
+    
+    x1 = (torch.tensor(np.array(im1)) / 255).cuda().permute(2, 0, 1)
+    x2 = (torch.tensor(np.array(im2)) / 255).cuda().permute(2, 0, 1)
+
+    im2_transfer_rgb = F.grid_sample(
+    x2[None], warp[:,:W, 2:][None], mode="bilinear", align_corners=False
+    )[0]
+    im1_transfer_rgb = F.grid_sample(
+    x1[None], warp[:, W:, :2][None], mode="bilinear", align_corners=False
+    )[0]
+    warp_im = torch.cat((im2_transfer_rgb,im1_transfer_rgb),dim=2)
+    white_im = torch.ones((H,2*W),device="cuda")
+    vis_im = certainty * warp_im + (1 - certainty) * white_im
+    tensor_to_pil(vis_im, unnormalize=False).save(save_path)
+

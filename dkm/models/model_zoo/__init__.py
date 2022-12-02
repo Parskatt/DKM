@@ -12,7 +12,7 @@ weight_urls = {
         "indoor": "https://github.com/Parskatt/storage/releases/download/dkmv3/DKMv3_indoor.pth",
     },
 }
-
+import torch
 from .DKMv3 import DKMv3
 
 def DKMv3_outdoor():
@@ -22,11 +22,13 @@ def DKMv3_outdoor():
     Additionally upsamples preds to fixed resolution of (864, 1152),
     can be turned off by model.upsample_preds = False
     """
-    return DKMv3(weight_urls["DKMv3"]["outdoor"], 540, 720)
+    weights = torch.hub.load_state_dict_from_url(weight_urls["DKMv3"]["outdoor"])
+    return DKMv3(weights, 540, 720, upsample_preds = True)
 
 def DKMv3_indoor():
     """
     Loads DKMv3 indoor weights, uses internal resolution of (480, 640) by default
     Resolution can be changed by setting model.h_resized, model.w_resized later.
     """
-    return DKMv3(weight_urls["DKMv3"]["indoor"], 480, 640, upsample_preds = False)
+    weights = torch.hub.load_state_dict_from_url(weight_urls["DKMv3"]["indoor"])
+    return DKMv3(weights, 480, 640, upsample_preds = False)
