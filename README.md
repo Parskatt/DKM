@@ -81,7 +81,7 @@ If you find our models useful, please consider citing our paper!
 ```
 @article{edstedt2022dkm,
   title={DKM: Dense Kernelized Feature Matching for Geometry Estimation},
-  author={Edstedt, Johan and Wadenb{\"a}ck, M{\aa}rten and Athanasiadis, Ioannis and Felsberg, Michael},
+  author={Edstedt, Johan and Athanasiadis, Ioannis and Wadenb{\"a}ck, M{\aa}rten and Felsberg, Michael},
   journal={arXiv preprint arXiv:2202.00667},
   year={2022}
 }
