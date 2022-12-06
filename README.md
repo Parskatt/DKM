@@ -73,6 +73,15 @@ See [Training](docs/training.md) for details.
 ## Reproducing Results
 Given that the required benchmark or training dataset has been downloaded and unpacked, results can be reproduced by running the experiments in the experiments folder.
 
+## Using DKM matches for estimation
+We recommend using the excellent Graph-Cut RANSAC algorithm: https://github.com/danini/graph-cut-ransac
+
+|       | @5    | @10  | @20  |
+|-------|-------|------|------|
+| DKMv3 (RANSAC) | *60.5*  | *74.9* | *85.1* |
+| DKMv3 (GC-RANSAC) | **65.5**  | **78.0** | **86.7** |
+
+
 ## Acknowledgements
 We have used code and been inspired by https://github.com/PruneTruong/DenseMatching, https://github.com/zju3dv/LoFTR, and https://github.com/GrumpyZhou/patch2pix. We additionally thank the authors of ECO-TR for providing their benchmark.
 
