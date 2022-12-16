@@ -1,5 +1,6 @@
 import math
 import numpy as np
+from PIL import Image
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -635,8 +636,10 @@ class RegressionMatcher(nn.Module):
         *args,
         batched=False,
     ):
-        from PIL import Image
-        im1, im2 = Image.open(im1_path), Image.open(im2_path)
+        if isinstance(im1_path, str):
+            im1, im2 = Image.open(im1_path), Image.open(im2_path)
+        else: # assume it is a PIL Image
+            im1, im2 = im1_path, im2_path
         
         symmetric = self.symmetric
         self.train(False)
