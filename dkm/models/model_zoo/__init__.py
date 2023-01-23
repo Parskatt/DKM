@@ -15,20 +15,26 @@ weight_urls = {
 import torch
 from .DKMv3 import DKMv3
 
-def DKMv3_outdoor():
+def DKMv3_outdoor(path_to_weights = None):
     """
     Loads DKMv3 outdoor weights, uses internal resolution of (540, 720) by default
     resolution can be changed by setting model.h_resized, model.w_resized later.
     Additionally upsamples preds to fixed resolution of (864, 1152),
     can be turned off by model.upsample_preds = False
     """
-    weights = torch.hub.load_state_dict_from_url(weight_urls["DKMv3"]["outdoor"])
+    if path_to_weights is not None:
+        weights = torch.load(path_to_weights)
+    else:
+        weights = torch.hub.load_state_dict_from_url(weight_urls["DKMv3"]["outdoor"])
     return DKMv3(weights, 540, 720, upsample_preds = True)
 
-def DKMv3_indoor():
+def DKMv3_indoor(path_to_weights = None):
     """
     Loads DKMv3 indoor weights, uses internal resolution of (480, 640) by default
     Resolution can be changed by setting model.h_resized, model.w_resized later.
     """
-    weights = torch.hub.load_state_dict_from_url(weight_urls["DKMv3"]["indoor"])
+    if path_to_weights is not None:
+        weights = torch.load(path_to_weights)
+    else:
+        weights = torch.hub.load_state_dict_from_url(weight_urls["DKMv3"]["indoor"])
     return DKMv3(weights, 480, 640, upsample_preds = False)
