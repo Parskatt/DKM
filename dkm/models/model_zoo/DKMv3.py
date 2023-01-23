@@ -142,7 +142,7 @@ def DKMv3(weights, h, w, symmetric = True, sample_mode= "threshold_balanced", **
     )
     decoder = Decoder(coordinate_decoder, gps, proj, conv_refiner, detach=True)
         
-    encoder = ResNet50(pretrained = True, high_res = False, freeze_bn=False)
+    encoder = ResNet50(pretrained = False, high_res = False, freeze_bn=False)
     matcher = RegressionMatcher(encoder, decoder, h=h, w=w, name = "DKMv3", sample_mode=sample_mode, symmetric = symmetric, **kwargs).cuda()
     res = matcher.load_state_dict(weights)
     return matcher
