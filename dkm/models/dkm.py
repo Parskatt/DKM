@@ -549,6 +549,7 @@ class RegressionMatcher(nn.Module):
         self.upsample_preds = upsample_preds
         self.symmetric = symmetric
         self.name = name
+        self.sample_thresh = 0.05
         
     def extract_backbone_features(self, batch, batched = True):
         x_q = batch["query"]
@@ -567,7 +568,7 @@ class RegressionMatcher(nn.Module):
         num=10000,
     ):
         if "threshold" in self.sample_mode:
-            upper_thresh = 0.05
+            upper_thresh = self.sample_thresh
             dense_certainty = dense_certainty.clone()
             dense_certainty[dense_certainty > upper_thresh] = 1
         elif "pow" in self.sample_mode:
