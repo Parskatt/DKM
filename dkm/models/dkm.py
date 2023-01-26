@@ -1,4 +1,5 @@
 import math
+import os
 import numpy as np
 from PIL import Image
 import torch
@@ -637,7 +638,7 @@ class RegressionMatcher(nn.Module):
         *args,
         batched=False,
     ):
-        if isinstance(im1_path, str):
+        if isinstance(im1_path, os.PathLike):
             im1, im2 = Image.open(im1_path), Image.open(im2_path)
         else: # assume it is a PIL Image
             im1, im2 = im1_path, im2_path
