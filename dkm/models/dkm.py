@@ -638,7 +638,7 @@ class RegressionMatcher(nn.Module):
         *args,
         batched=False,
     ):
-        if os.path.exists(im1_path):
+        if isinstance(im1_path, (str, os.PathLike)):
             im1, im2 = Image.open(im1_path), Image.open(im2_path)
         else: # assume it is a PIL Image
             im1, im2 = im1_path, im2_path
