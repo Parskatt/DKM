@@ -15,7 +15,7 @@ if __name__ == "__main__":
     
     args, _ = parser.parse_known_args()
     im1_path = args.im_A_path
-    im2_path = args.im_A_path
+    im2_path = args.im_B_path
     save_path = args.save_path
     
     # Create model
