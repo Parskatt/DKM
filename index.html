@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description" content="DKM: Dense Kernelized Feature Matching for Geometry Estimation">
+  <meta name="keywords" content="feature matching, dense matching, two-view geometry">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DKM: Dense Kernelized Feature Matching for Geometry Estimation</title>
+  <link rel="apple-touch-icon" sizes="180x180" href="static/favicon/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="static/favicon/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="static/favicon/favicon-16x16.png">
+  <link rel="manifest" href="static/favicon/site.webmanifest">
+  <script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+
+    gtag('js', new Date());
+
+    gtag('config', 'G-PYVRSFMDRL');
+  </script>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/index.js"></script>
+</head>
+<body>
+
+
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title">DKM: Dense Kernelized Feature Matching for Geometry Estimation</h1>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">
+              <a href="https://scholar.google.com/citations?user=Ul-vMR0AAAAJ">Johan Edstedt</a>,</span>
+            </span>
+            <span class="author-block">
+              <a href="https://scholar.google.com/citations?user=RCAtJgUAAAAJ">Ioannis Athanasiadis</a>,</span>
+            </span>
+            <span class="author-block">
+              <a href="https://scholar.google.com/citations?user=6WRQpCQAAAAJ">Mårten Wadenbäck</a>,
+            </span>
+            <span class="author-block">
+              <a href="https://scholar.google.com/citations?&user=lkWfR08AAAAJ">Michael Felsberg</a>
+            </span>            
+             <br>
+          </div>
+
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">Computer Vision Laboratory, Linköping University &nbsp;&nbsp;</span>
+          </div>
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+              <!-- PDF Link. -->
+  <!--             <span class="link-block">
+                <a href="static/paper.pdf"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fas fa-file-pdf"></i>
+                  </span>
+                  <span>Paper</span>
+                </a>
+              </span> -->
+              <span class="link-block">
+                <a href="https://arxiv.org/abs/2202.00667"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="ai ai-arxiv"></i>
+                  </span>
+                  <span>Paper</span>
+                </a>
+              </span>
+              <!-- supp PDF Link. -->
+<!--               <span class="link-block">
+                <a href="static/supp.pdf"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fas fa-file-pdf"></i>
+                  </span>
+                  <span>Supp</span>
+                </a>
+              </span> -->
+              <!-- Video Link. 
+              <span class="link-block">
+                <a href="https://www.youtube.com/watch?v=MrKrnHhk8IA"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-youtube"></i>
+                  </span>
+                  <span>Video</span>
+                </a>
+              </span> 
+              -->
+              <!-- Code Link. -->
+              <span class="link-block">
+                <a href="https://github.com/Parskatt/DKM"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-github"></i>
+                  </span>
+                  <span>Code</span>
+                  </a>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+    
+
+<section class="hero is-light is-small">
+  <div class="hero-body">
+    <div class="container">
+      <div id="results-carousel" class="carousel results-carousel">
+        <div class="item item-mount_rushmore">
+          <video poster="" id="mount_rushmore" autoplay controls muted loop height="100%">
+            <source src="static\videos\mount_rushmore.mp4"
+                    type="video/mp4">
+          </video>   
+        </div>
+        <div class="item item-tower_of_london">
+          <video poster="" id="tower_of_london" autoplay controls muted loop height="100%">
+            <source src="static/videos/tower_of_london.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+        <div class="item item-piazza_san_marco">
+          <video poster="" id="piazza_san_marco" autoplay controls muted loop height="100%">
+            <source src="static/videos/piazza_san_marco.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+        <div class="item item-milan_cathedral">
+          <video poster="" id="milan_cathedral" autoplay controls muted loop height="100%">
+            <source src="static/videos/milan_cathedral.mp4"
+                    type="video/mp4">
+          </video>
+        </div>
+                         
+      </div>
+    </div>
+  </div>
+   	<div align="center">
+		Visualization of DKM warps. 
+    <br>
+    We visualize the warp between the images by sampling the estimated matching pixel in the other image.
+    <br>
+    We multiply this value with the estimated confidence.
+    <br>
+    The animation is done by interpolating between the original image and the warped one.
+  </div>
+</section>
+
+
+    
+
+
+<section class="section">
+  <div class="container">
+
+    <!-- Abstract. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-two-thirds">
+        <h2 class="title is-2">TLDR</h2>
+        <div class="content has-text-justified">
+          <p>
+            Instead of finding sparse correspondences we estimate a dense warp.
+            <br>
+            In contrast to previous dense matching work, our dense approach is able to achieve state-of-art results on two-view geometry.
+
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!--/ Abstract. -->
+
+</div> 
+
+<section class="section">
+  <div class="container">
+
+    <!-- Abstract. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-two-thirds">
+        <h2 class="title is-2">Method</h2>
+        <div class="content has-text-justified">
+          <p>
+            We propose Dense Kernelized Feature Matching (DKM). Our approach consists of three main contributions:
+            <ol>
+              <li>A Gaussian Process based Global Matcher. </li>
+              <li>Large depthwise kernel warp refinement.</li>
+              <li>A balanced sampling approach to estimation. </li>
+            </ol>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!--/ Abstract. -->
+
+</div> 
+
+
+<section class="section" id="BibTeX">
+  <div class="container content">
+    <h2 class="title">BibTeX</h2>
+    <pre><code>
+      @inproceedings{edstedt2023dkm,
+        title={{DKM}: Dense Kernelized Feature Matching for Geometry Estimation},
+        author={Edstedt, Johan and Athanasiadis, Ioannis and Wadenbäck, Mårten and Felsberg, Michael},
+        booktitle={IEEE Conference on Computer Vision and Pattern Recognition},
+        year={2023}
+      }
+</code></pre>
+  </div>
+</section>
+    
+
+<footer class="footer">
+  <div align="center" class="container">
+    <div class="columns is-centered">
+        <div class="content">
+            Website template from <a href="https://github.com/nerfies/nerfies.github.io">here</a>.
+        </div>
+      </div>
+    </div>
+</footer>
+
+</body>
+</html>
