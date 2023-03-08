@@ -1,12 +1,18 @@
 # DKM: Dense Kernelized Feature Matching for Geometry Estimation
-<img src="assets/dkmv3_warp.jpg" alt="DKMv3 warp" width="800"/>
+### [Project Page](https://parskatt.github.io/DKM) | [Paper](https://arxiv.org/abs/2202.00667)
+<br/>
 
+> DKM: Dense Kernelized Feature Matching for Geometry Estimation  
+> [Johan Edstedt](https://scholar.google.com/citations?user=Ul-vMR0AAAAJ), [Ioannis Athanasiadis](https://scholar.google.com/citations?user=RCAtJgUAAAAJ), [Mårten Wadenbäck](https://scholar.google.com/citations?user=6WRQpCQAAAAJ), [Michael Felsberg](https://scholar.google.com/citations?&user=lkWfR08AAAAJ)  
+> CVPR 2023
+
+<video poster="" id="mount_rushmore" autoplay controls muted loop height="100%">
+            <source src="assets\mount_rushmore.mp4"
+                    type="video/mp4">
+          </video>
 
 Contains code for [*DKM: Dense Kernelized Feature Matching for Geometry Estimation*](https://arxiv.org/abs/2202.00667) 
 
-**Note** The code in this repo is in active development, and the api may change without notice.
-
-⚡ **DKMv3 is out, with improved result on ScanNet1500 (+1.6 AUC@5) and MegaDepth1500 (+3.5 AUC@5)**!
 ## Benchmark Results
 
 <details>
@@ -37,18 +43,6 @@ Contains code for [*DKM: Dense Kernelized Feature Matching for Geometry Estimati
 
 </details>
 
-## TODO
-
-<details>
-
-- [x] Initial commit of DKMv3
-- [ ] Fix compatability issues between DKM versions
-- [ ] St Pauls Cathedral Benchmark
-- [ ] Scannet download instructions
-- [ ] Update demos for DKMv3
-
-</details>
-
 ## Navigating the Code
 * Code for models can be found in [dkm/models](dkm/models/)
 * Code for benchmarks can be found in [dkm/benchmarks](dkm/benchmarks/)
@@ -58,13 +52,12 @@ Contains code for [*DKM: Dense Kernelized Feature Matching for Geometry Estimati
 Run ``pip install -e .``
 
 ## Demo
-**Currently broken!**
 
 A demonstration of our method can be run by:
 ``` bash
 python demo_match.py
 ```
-This runs our model trained on mega on two images I took recently in the wild.
+This runs our model trained on mega on two images taken from Sacre Coeur.
 
 ## Benchmarks
 See [Benchmarks](docs/benchmarks.md) for details.
@@ -88,10 +81,10 @@ We have used code and been inspired by https://github.com/PruneTruong/DenseMatch
 ## BibTeX
 If you find our models useful, please consider citing our paper!
 ```
-@article{edstedt2022dkm,
-  title={DKM: Dense Kernelized Feature Matching for Geometry Estimation},
-  author={Edstedt, Johan and Athanasiadis, Ioannis and Wadenb{\"a}ck, M{\aa}rten and Felsberg, Michael},
-  journal={arXiv preprint arXiv:2202.00667},
-  year={2022}
+@inproceedings{edstedt2023dkm,
+title={{DKM}: Dense Kernelized Feature Matching for Geometry Estimation},
+author={Edstedt, Johan and Athanasiadis, Ioannis and Wadenbäck, Mårten and Felsberg, Michael},
+booktitle={IEEE Conference on Computer Vision and Pattern Recognition},
+year={2023}
 }
 ```
