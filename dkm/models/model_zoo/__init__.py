@@ -1,12 +1,4 @@
 weight_urls = {
-    "DKM": {
-        "mega_synthetic": "https://github.com/Parskatt/storage/releases/download/dkm_mega_synthetic/dkm_mega_synthetic.pth",
-        "mega": "https://github.com/Parskatt/storage/releases/download/dkm_mega/dkm_mega.pth",
-    },
-    "DKMv2": {
-        "outdoor": "https://github.com/Parskatt/storage/releases/download/dkmv2/dkm_v2_outdoor.pth",
-        "indoor": "https://github.com/Parskatt/storage/releases/download/dkmv2/dkm_v2_indoor.pth",
-    },
     "DKMv3": {
         "outdoor": "https://github.com/Parskatt/storage/releases/download/dkmv3/DKMv3_outdoor.pth",
         "indoor": "https://github.com/Parskatt/storage/releases/download/dkmv3/DKMv3_indoor.pth",

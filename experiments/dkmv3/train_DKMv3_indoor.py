@@ -165,10 +165,11 @@ def get_model(pretrained_backbone=True, resolution = "low", **kwargs):
     matcher = RegressionMatcher(encoder, decoder, h=h, w=w, alpha=1, beta=0,**kwargs).cuda()
     return matcher
 
-def train(gpus=1, wandb_log = True):
+def train(args):
+    gpus, wandb_log, wandb_entity = args.gpus, not args.dont_log_wandb, args.wandb_entity 
     experiment_name = os.path.splitext(os.path.basename(__file__))[0]
     wandb_mode = "online" if wandb_log else "disabled"
-    wandb.init(project="dkm", entity="parskatt", name=experiment_name, reinit=False, mode = wandb_mode)
+    wandb.init(project="dkm", entity=wandb_entity, name=experiment_name, reinit=False, mode = wandb_mode)
     checkpoint_dir = "workspace/checkpoints/"
     h, w = 480, 640
     model = get_model(pretrained_backbone=True, resolution="high")
@@ -273,17 +274,6 @@ if __name__ == "__main__":
     parser.add_argument("--gpus", default=1, type=int)
     parser.add_argument("--test", action='store_true')
     parser.add_argument("--dont_log_wandb", action='store_true')
+    parser.add_argument("--wandb_entity", type=str)
     args, _ = parser.parse_known_args()
-    if not args.test:
-        train(gpus=args.gpus, wandb_log=not args.dont_log_wandb)
-    experiment_name = os.path.splitext(os.path.basename(__file__))[0]
-    checkpoint_dir = "workspace/checkpoints/"
-    checkpoint_name = checkpoint_dir + experiment_name + "_latest.pth"
-    test_resolution = "high"
-    sample_mode = "threshold_balanced"
-    symmetric = True
-    upsample_preds = False
-    model = get_model(pretrained_backbone=False, resolution = test_resolution, sample_mode = sample_mode, upsample_preds = upsample_preds,symmetric=symmetric)
-    states = torch.load(checkpoint_name)
-    model.load_state_dict(states["model"])
-    test_scannet(model, experiment_name+"_05_cert_16_099999", test_resolution, sample_mode)
+    train(args)

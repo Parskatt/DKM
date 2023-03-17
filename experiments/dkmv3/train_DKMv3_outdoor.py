@@ -168,10 +168,11 @@ def get_model(pretrained_backbone=True, resolution = "low", **kwargs):
     matcher = RegressionMatcher(encoder, decoder, h=h, w=w, alpha=1, beta=0,**kwargs).cuda()
     return matcher
 
-def train(gpus=1, wandb_log = True):
+def train(args):
+    gpus, wandb_log, wandb_entity = args.gpus, not args.dont_log_wandb, args.wandb_entity 
     experiment_name = os.path.splitext(os.path.basename(__file__))[0]
     wandb_mode = "online" if wandb_log else "disabled"
-    wandb.init(project="dkm", entity="parskatt", name=experiment_name, reinit=False, mode = wandb_mode)
+    wandb.init(project="dkm", entity=wandb_entity, name=experiment_name, reinit=False, mode = wandb_mode)
     checkpoint_dir = "workspace/checkpoints/"
     h, w = 540, 720
     model = get_model(pretrained_backbone=True, resolution="higher")
@@ -245,5 +246,6 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--gpus", default=1, type=int)
     parser.add_argument("--dont_log_wandb", action='store_true')
+    parser.add_argument("--wandb_entity", type=str)
     args, _ = parser.parse_known_args()
-    train(gpus=args.gpus, wandb_log=not args.dont_log_wandb)
+    train(args)

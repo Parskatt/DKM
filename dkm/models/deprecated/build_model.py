@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from .dkm import *
+from dkm import *
 from .local_corr import LocalCorr
 from .corr_channels import NormedCorr
 from torchvision.models import resnet as tv_resnet

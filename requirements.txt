@@ -8,3 +8,4 @@ loguru
 tqdm
 matplotlib
 h5py
+wandb
