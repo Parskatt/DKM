@@ -6,6 +6,9 @@ from dkm.utils.utils import tensor_to_pil
 
 from dkm.models.model_zoo import DKMv3_outdoor
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+
 if __name__ == "__main__":
     from argparse import ArgumentParser
     parser = ArgumentParser()
@@ -30,8 +33,8 @@ if __name__ == "__main__":
     warp, certainty = dkm_model.match(im1_path, im2_path)
     # Sampling not needed, but can be done with model.sample(warp, certainty)
     
-    x1 = (torch.tensor(np.array(im1)) / 255).cuda().permute(2, 0, 1)
-    x2 = (torch.tensor(np.array(im2)) / 255).cuda().permute(2, 0, 1)
+    x1 = (torch.tensor(np.array(im1)) / 255).to(device).permute(2, 0, 1)
+    x2 = (torch.tensor(np.array(im2)) / 255).to(device).permute(2, 0, 1)
 
     im2_transfer_rgb = F.grid_sample(
     x2[None], warp[:,:W, 2:][None], mode="bilinear", align_corners=False
@@ -40,7 +43,7 @@ if __name__ == "__main__":
     x1[None], warp[:, W:, :2][None], mode="bilinear", align_corners=False
     )[0]
     warp_im = torch.cat((im2_transfer_rgb,im1_transfer_rgb),dim=2)
-    white_im = torch.ones((H,2*W),device="cuda")
+    white_im = torch.ones((H,2*W),device=device)
     vis_im = certainty * warp_im + (1 - certainty) * white_im
     tensor_to_pil(vis_im, unnormalize=False).save(save_path)
 
