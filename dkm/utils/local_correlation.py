@@ -1,6 +1,8 @@
 import torch
 import torch.nn.functional as F
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 
 def local_correlation(
     feature0,
@@ -14,8 +16,8 @@ def local_correlation(
         # If flow is None, assume feature0 and feature1 are aligned
         coords = torch.meshgrid(
                 (
-                    torch.linspace(-1 + 1 / h, 1 - 1 / h, h, device="cuda"),
-                    torch.linspace(-1 + 1 / w, 1 - 1 / w, w, device="cuda"),
+                    torch.linspace(-1 + 1 / h, 1 - 1 / h, h, device=device),
+                    torch.linspace(-1 + 1 / w, 1 - 1 / w, w, device=device),
                 ))
         coords = torch.stack((coords[1], coords[0]), dim=-1)[
             None
@@ -25,8 +27,8 @@ def local_correlation(
     r = local_radius
     local_window = torch.meshgrid(
                 (
-                    torch.linspace(-2*local_radius/h, 2*local_radius/h, 2*r+1, device="cuda"),
-                    torch.linspace(-2*local_radius/w, 2*local_radius/w, 2*r+1, device="cuda"),
+                    torch.linspace(-2*local_radius/h, 2*local_radius/h, 2*r+1, device=device),
+                    torch.linspace(-2*local_radius/w, 2*local_radius/w, 2*r+1, device=device),
                 ))
     local_window = torch.stack((local_window[1], local_window[0]), dim=-1)[
             None

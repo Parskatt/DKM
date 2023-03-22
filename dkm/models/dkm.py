@@ -10,6 +10,9 @@ from einops import rearrange
 from dkm.utils.local_correlation import local_correlation
 
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+
 class ConvRefiner(nn.Module):
     def __init__(
         self,
@@ -91,8 +94,8 @@ class ConvRefiner(nn.Module):
         if self.has_displacement_emb:
             query_coords = torch.meshgrid(
             (
-                torch.linspace(-1 + 1 / hs, 1 - 1 / hs, hs, device="cuda"),
-                torch.linspace(-1 + 1 / ws, 1 - 1 / ws, ws, device="cuda"),
+                torch.linspace(-1 + 1 / hs, 1 - 1 / hs, hs, device=device),
+                torch.linspace(-1 + 1 / ws, 1 - 1 / ws, ws, device=device),
             )
             )
             query_coords = torch.stack((query_coords[1], query_coords[0]))
@@ -658,12 +661,12 @@ class RegressionMatcher(nn.Module):
                     resize=(hs, ws), normalize=True
                 )
                 query, support = test_transform((im1, im2))
-                batch = {"query": query[None].cuda(), "support": support[None].cuda()}
+                batch = {"query": query[None].to(device), "support": support[None].to(device)}
             else:
                 b, c, h, w = im1.shape
                 b, c, h2, w2 = im2.shape
                 assert w == w2 and h == h2, "For batched images we assume same size"
-                batch = {"query": im1.cuda(), "support": im2.cuda()}
+                batch = {"query": im1.to(device), "support": im2.to(device)}
                 hs, ws = self.h_resized, self.w_resized
             finest_scale = 1
             # Run matcher
@@ -692,7 +695,7 @@ class RegressionMatcher(nn.Module):
                     resize=(hs, ws), normalize=True
                 )
                 query, support = test_transform((im1, im2))
-                query, support = query[None].cuda(), support[None].cuda()
+                query, support = query[None].to(device), support[None].to(device)
                 if symmetric:
                     query, support = torch.cat((query,support)), torch.cat((support,query))
                 query_to_support, dense_certainty = self.decoder.upsample_preds(
@@ -704,8 +707,8 @@ class RegressionMatcher(nn.Module):
             # Create im1 meshgrid
             query_coords = torch.meshgrid(
                 (
-                    torch.linspace(-1 + 1 / hs, 1 - 1 / hs, hs, device="cuda"),
-                    torch.linspace(-1 + 1 / ws, 1 - 1 / ws, ws, device="cuda"),
+                    torch.linspace(-1 + 1 / hs, 1 - 1 / hs, hs, device=device),
+                    torch.linspace(-1 + 1 / ws, 1 - 1 / ws, ws, device=device),
                 )
             )
             query_coords = torch.stack((query_coords[1], query_coords[0]))
