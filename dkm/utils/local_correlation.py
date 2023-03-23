@@ -1,8 +1,6 @@
 import torch
 import torch.nn.functional as F
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
 
 def local_correlation(
     feature0,
@@ -11,6 +9,7 @@ def local_correlation(
     padding_mode="zeros",
     flow = None
 ):
+    device = feature0.device
     b, c, h, w = feature0.size()
     if flow is None:
         # If flow is None, assume feature0 and feature1 are aligned

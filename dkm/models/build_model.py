@@ -17,10 +17,9 @@ dkm_pretrained_urls = {
 }
 
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-
-def DKM(pretrained=True, version="mega_synthetic"):
+def DKM(pretrained=True, version="mega_synthetic", device=None):
+    if device is None:
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     gp_dim = 256
     dfn_dim = 384
     feat_dim = 256
