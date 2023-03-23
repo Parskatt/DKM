@@ -10,9 +10,6 @@ from einops import rearrange
 from dkm.utils.local_correlation import local_correlation
 
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
-
 class ConvRefiner(nn.Module):
     def __init__(
         self,
@@ -88,6 +85,7 @@ class ConvRefiner(nn.Module):
         Returns:
             [type]: [description]
         """
+        device = x.device
         b,c,hs,ws = x.shape
         with torch.no_grad():
             x_hat = F.grid_sample(y, flow.permute(0, 2, 3, 1), align_corners=False)
@@ -114,7 +112,7 @@ class ConvRefiner(nn.Module):
                 if self.no_support_fm:
                     x_hat = torch.zeros_like(x)
                 d = torch.cat((x, x_hat, emb_in_displacement, local_corr), dim=1)
-            else:    
+            else:
                 d = torch.cat((x, x_hat, emb_in_displacement), dim=1)
         else:
             if self.no_support_fm:
@@ -395,7 +393,7 @@ class Encoder(nn.Module):
         x5 = self.resnet.layer4(x4)
         feats = {32: x5, 16: x4, 8: x3, 4: x2, 2: x1, 1: x0}
         return feats
-    
+
     def train(self, mode=True):
         super().train(mode)
         for m in self.modules():
@@ -453,7 +451,7 @@ class Decoder(nn.Module):
         ].expand(b, h, w, 2)
         coarse_coords = rearrange(coarse_coords, "b h w d -> b d h w")
         return coarse_coords
-    
+
 
     def forward(self, f1, f2):
         coarse_scales = self.embedding_decoder.scales()
@@ -521,7 +519,7 @@ class Decoder(nn.Module):
                 )
                 if self.detach:
                     dense_flow = dense_flow.detach()
-                    dense_certainty = dense_certainty.detach()                
+                    dense_certainty = dense_certainty.detach()
         return dense_corresps
 
 
@@ -554,7 +552,7 @@ class RegressionMatcher(nn.Module):
         self.symmetric = symmetric
         self.name = name
         self.sample_thresh = 0.05
-        
+
     def extract_backbone_features(self, batch, batched = True):
         x_q = batch["query"]
         x_s = batch["support"]
@@ -593,7 +591,7 @@ class RegressionMatcher(nn.Module):
         good_matches, good_certainty = matches[good_samples], certainty[good_samples]
         if "balanced" not in self.sample_mode:
             return good_matches, good_certainty
-        
+
         from dkm.utils.kde import kde
         density = kde(good_matches, std=0.1).cpu().numpy()
         p = 1 / (density+1)
@@ -640,12 +638,14 @@ class RegressionMatcher(nn.Module):
         im2_path,
         *args,
         batched=False,
+        device = None
     ):
         if isinstance(im1_path, (str, os.PathLike)):
             im1, im2 = Image.open(im1_path), Image.open(im2_path)
         else: # assume it is a PIL Image
             im1, im2 = im1_path, im2_path
-        
+        if device is None:
+            device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         symmetric = self.symmetric
         self.train(False)
         with torch.no_grad():
@@ -656,7 +656,7 @@ class RegressionMatcher(nn.Module):
                 # Get images in good format
                 ws = self.w_resized
                 hs = self.h_resized
-                
+
                 test_transform = get_tuple_transform_ops(
                     resize=(hs, ws), normalize=True
                 )
@@ -674,7 +674,7 @@ class RegressionMatcher(nn.Module):
                 dense_corresps  = self.forward_symmetric(batch)
             else:
                 dense_corresps = self.forward(batch, batched = True)
-            
+
             query_to_support = dense_corresps[finest_scale]["dense_flow"]
             # Get certainty interpolation
             dense_certainty = dense_corresps[finest_scale]["dense_certainty"]
@@ -688,8 +688,8 @@ class RegressionMatcher(nn.Module):
             query_to_support = query_to_support.permute(
                 0, 2, 3, 1
                 )
-            
-            if self.upsample_preds: 
+
+            if self.upsample_preds:
                 hs, ws = 864,1152
                 test_transform = get_tuple_transform_ops(
                     resize=(hs, ws), normalize=True

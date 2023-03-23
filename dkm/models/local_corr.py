@@ -8,9 +8,9 @@ except:
 import re
 from .dkm import ConvRefiner
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class Stream:
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     if device == 'cuda':
         stream = torch.cuda.current_stream(device=device).cuda_stream
     else:
@@ -622,6 +622,7 @@ class LocalCorr(ConvRefiner):
 
 
 if __name__ == "__main__":
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     x = torch.randn(2, 128, 32, 32).to(device)
     y = torch.randn(2, 128, 32, 32).to(device)
     local_corr = LocalCorr(in_dim=81, hidden_dim=81 * 4)

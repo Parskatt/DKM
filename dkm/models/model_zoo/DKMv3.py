@@ -1,13 +1,13 @@
 import torch
 
 from torch import nn
-from dkm.models.dkm import * 
+from dkm.models.dkm import *
 from dkm.models.encoders import *
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-
-def DKMv3(weights, h, w, symmetric = True, sample_mode= "threshold_balanced", **kwargs):
+def DKMv3(weights, h, w, symmetric = True, sample_mode= "threshold_balanced", device = None, **kwargs):
+    if device is None:
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     gp_dim = 256
     dfn_dim = 384
     feat_dim = 256
@@ -143,7 +143,7 @@ def DKMv3(weights, h, w, symmetric = True, sample_mode= "threshold_balanced", **
         {"16": nn.Conv2d(1024, 512, 1, 1), "32": nn.Conv2d(2048, 512, 1, 1)}
     )
     decoder = Decoder(coordinate_decoder, gps, proj, conv_refiner, detach=True)
-        
+
     encoder = ResNet50(pretrained = False, high_res = False, freeze_bn=False)
     matcher = RegressionMatcher(encoder, decoder, h=h, w=w, name = "DKMv3", sample_mode=sample_mode, symmetric = symmetric, **kwargs).to(device)
     res = matcher.load_state_dict(weights)
