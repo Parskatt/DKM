@@ -7,12 +7,15 @@ from torch.utils.data import ConcatDataset
 
 
 class MegadepthDenseBenchmark:
-    def __init__(self, data_root="data/megadepth", h = 384, w = 512, num_samples = 2000) -> None:
+    def __init__(self, data_root="data/megadepth", h = 384, w = 512, num_samples = 2000, device=None) -> None:
         mega = MegadepthBuilder(data_root=data_root)
         self.dataset = ConcatDataset(
             mega.build_scenes(split="test_loftr", ht=h, wt=w)
         )  # fixed resolution of 384,512
         self.num_samples = num_samples
+        if device is None:
+            device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.device = device
 
     def geometric_dist(self, depth1, depth2, T_1to2, K1, K2, dense_matches):
         b, h1, w1, d = dense_matches.shape
@@ -60,11 +63,11 @@ class MegadepthDenseBenchmark:
                 im1, im2, depth1, depth2, T_1to2, K1, K2 = (
                     data["query"],
                     data["support"],
-                    data["query_depth"].cuda(),
-                    data["support_depth"].cuda(),
-                    data["T_1to2"].cuda(),
-                    data["K1"].cuda(),
-                    data["K2"].cuda(),
+                    data["query_depth"].to(self.device),
+                    data["support_depth"].to(self.device),
+                    data["T_1to2"].to(self.device),
+                    data["K1"].to(self.device),
+                    data["K2"].to(self.device),
                 )
                 matches, certainty = model.match(im1, im2, batched=True)
                 gd, pck_1, pck_3, pck_5 = self.geometric_dist(

@@ -6,6 +6,8 @@ from torchvision.transforms.functional import InterpolationMode
 import torch.nn.functional as F
 from PIL import Image
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 # Code taken from https://github.com/PruneTruong/DenseMatching/blob/40c29a6b5c35e86b9509e65ab0cd12553d998e5f/validation/utils_pose_estimation.py
 # --- GEOMETRY ---
 def estimate_pose(kpts0, kpts1, K0, K1, norm_thresh, conf=0.99999):
@@ -289,8 +291,8 @@ def warp_kpts(kpts0, depth0, depth1, T_0to1, K0, K1):
     return valid_mask, w_kpts0
 
 
-imagenet_mean = torch.tensor([0.485, 0.456, 0.406]).cuda()
-imagenet_std = torch.tensor([0.229, 0.224, 0.225]).cuda()
+imagenet_mean = torch.tensor([0.485, 0.456, 0.406]).to(device)
+imagenet_std = torch.tensor([0.229, 0.224, 0.225]).to(device)
 
 
 def numpy_to_pil(x: np.ndarray):
@@ -317,7 +319,7 @@ def tensor_to_pil(x, unnormalize=False):
 def to_cuda(batch):
     for key, value in batch.items():
         if isinstance(value, torch.Tensor):
-            batch[key] = value.cuda()
+            batch[key] = value.to(device)
     return batch
 
 

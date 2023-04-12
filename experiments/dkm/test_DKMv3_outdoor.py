@@ -5,10 +5,13 @@ def test_mega1500(model):
     model.h_resized = 660
     model.w_resized = 880
     model.upsample_preds = True
+    #model.upsample_res = (968, 1472)
+    model.upsample_res = (1152, 1536)
+    model.use_soft_mutual_nearest_neighbours = False
     megaloftr_benchmark = Megadepth1500Benchmark("data/megadepth")
     megaloftr_results = []
     megaloftr_results.append(megaloftr_benchmark.benchmark(model))
-    json.dump(megaloftr_results, open(f"results/mega1500_{model.name}.json", "w"))
+    json.dump(megaloftr_results, open(f"results/mega1500_{model.name}_1152_1536_upsample_8_4_2_1_again2.json", "w"))
 
 
 def test_mega_8_scenes(model):
@@ -16,6 +19,7 @@ def test_mega_8_scenes(model):
     model.h_resized = 660
     model.w_resized = 880
     model.upsample_preds = True
+    model.upsample_res = (1152, 1536)
     megaloftr_benchmark = Megadepth1500Benchmark("data/megadepth",
                                                 scene_names=['mega_8_scenes_0019_0.1_0.3.npz',
                                                             'mega_8_scenes_0025_0.1_0.3.npz',
@@ -36,7 +40,7 @@ def test_mega_8_scenes(model):
                                                             )
     megaloftr_results = []
     megaloftr_results.append(megaloftr_benchmark.benchmark(model))
-    json.dump(megaloftr_results, open(f"results/mega_8_scenes_{model.name}.json", "w"))
+    json.dump(megaloftr_results, open(f"results/mega_8_scenes_{model.name}_1152_1536_upsample_8_4_2_1.json", "w"))
 
 
 def test_hpatches(model):
@@ -72,8 +76,8 @@ def test_st_pauls(model):
 if __name__ == "__main__":
     from dkm.models.model_zoo import DKMv3_outdoor
     model = DKMv3_outdoor()
-    # test_mega1500(model)
-    test_mega_8_scenes(model)
+    test_mega1500(model)
+    #test_mega_8_scenes(model)
     # test_hpatches(model)
     # test_st_paults(model) # TODO: benchmark provided by ECO-TR authors, not sure about uploading.
     

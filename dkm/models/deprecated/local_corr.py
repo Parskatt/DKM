@@ -10,7 +10,11 @@ from ..dkm import ConvRefiner
 
 
 class Stream:
-    ptr = torch.cuda.current_stream().cuda_stream
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    if device == 'cuda':
+        stream = torch.cuda.current_stream(device=device).cuda_stream
+    else:
+        stream = None
 
 
 kernel_Correlation_rearrange = """
@@ -618,8 +622,9 @@ class LocalCorr(ConvRefiner):
 
 
 if __name__ == "__main__":
-    x = torch.randn(2, 128, 32, 32).cuda()
-    y = torch.randn(2, 128, 32, 32).cuda()
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    x = torch.randn(2, 128, 32, 32).to(device)
+    y = torch.randn(2, 128, 32, 32).to(device)
     local_corr = LocalCorr(in_dim=81, hidden_dim=81 * 4)
     z = local_corr(x, y)
     print("hej")

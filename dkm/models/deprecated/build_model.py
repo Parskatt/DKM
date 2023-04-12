@@ -17,7 +17,9 @@ dkm_pretrained_urls = {
 }
 
 
-def DKM(pretrained=True, version="mega_synthetic"):
+def DKM(pretrained=True, version="mega_synthetic", device=None):
+    if device is None:
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     gp_dim = 256
     dfn_dim = 384
     feat_dim = 256
@@ -140,7 +142,7 @@ def DKM(pretrained=True, version="mega_synthetic"):
     encoder = Encoder(
         tv_resnet.resnet50(pretrained=not pretrained),
     )  # only load pretrained weights if not loading a pretrained matcher ;)
-    matcher = RegressionMatcher(encoder, decoder, h=h, w=w).cuda()
+    matcher = RegressionMatcher(encoder, decoder, h=h, w=w).to(device)
     if pretrained:
         weights = torch.hub.load_state_dict_from_url(
             dkm_pretrained_urls["DKM"][version]
@@ -285,7 +287,7 @@ def DKMv2(pretrained=True, version="outdoor", resolution = "low", **kwargs):
     encoder = Encoder(
         tv_resnet.resnet50(pretrained=not pretrained),
     )  # only load pretrained weights if not loading a pretrained matcher ;)
-    matcher = RegressionMatcher(encoder, decoder, h=h, w=w,**kwargs).cuda()
+    matcher = RegressionMatcher(encoder, decoder, h=h, w=w,**kwargs).to(device)
     if pretrained:
         try:
             weights = torch.hub.load_state_dict_from_url(
@@ -422,7 +424,7 @@ def local_corr(pretrained=True, version="mega_synthetic"):
     encoder = Encoder(
         tv_resnet.resnet50(pretrained=not pretrained)
     )  # only load pretrained weights if not loading a pretrained matcher ;)
-    matcher = RegressionMatcher(encoder, decoder, h=h, w=w).cuda()
+    matcher = RegressionMatcher(encoder, decoder, h=h, w=w).to(device)
     if pretrained:
         weights = torch.hub.load_state_dict_from_url(
             dkm_pretrained_urls["local_corr"][version]
@@ -533,7 +535,7 @@ def corr_channels(pretrained=True, version="mega_synthetic"):
     encoder = Encoder(
         tv_resnet.resnet50(pretrained=not pretrained)
     )  # only load pretrained weights if not loading a pretrained matcher ;)
-    matcher = RegressionMatcher(encoder, decoder, h=h, w=w).cuda()
+    matcher = RegressionMatcher(encoder, decoder, h=h, w=w).to(device)
     if pretrained:
         weights = torch.hub.load_state_dict_from_url(
             dkm_pretrained_urls["corr_channels"][version]
@@ -644,7 +646,7 @@ def baseline(pretrained=True, version="mega_synthetic"):
     encoder = Encoder(
         tv_resnet.resnet50(pretrained=not pretrained)
     )  # only load pretrained weights if not loading a pretrained matcher ;)
-    matcher = RegressionMatcher(encoder, decoder, h=h, w=w).cuda()
+    matcher = RegressionMatcher(encoder, decoder, h=h, w=w).to(device)
     if pretrained:
         weights = torch.hub.load_state_dict_from_url(
             dkm_pretrained_urls["baseline"][version]
@@ -776,7 +778,7 @@ def linear(pretrained=True, version="mega_synthetic"):
     encoder = Encoder(
         tv_resnet.resnet50(pretrained=not pretrained)
     )  # only load pretrained weights if not loading a pretrained matcher ;)
-    matcher = RegressionMatcher(encoder, decoder, h=h, w=w).cuda()
+    matcher = RegressionMatcher(encoder, decoder, h=h, w=w).to(device)
     if pretrained:
         weights = torch.hub.load_state_dict_from_url(
             dkm_pretrained_urls["linear"][version]

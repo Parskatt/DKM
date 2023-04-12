@@ -85,14 +85,15 @@ class ConvRefiner(nn.Module):
         Returns:
             [type]: [description]
         """
+        device = x.device
         b,c,hs,ws = x.shape
         with torch.no_grad():
             x_hat = F.grid_sample(y, flow.permute(0, 2, 3, 1), align_corners=False)
         if self.has_displacement_emb:
             query_coords = torch.meshgrid(
             (
-                torch.linspace(-1 + 1 / hs, 1 - 1 / hs, hs, device="cuda"),
-                torch.linspace(-1 + 1 / ws, 1 - 1 / ws, ws, device="cuda"),
+                torch.linspace(-1 + 1 / hs, 1 - 1 / hs, hs, device=device),
+                torch.linspace(-1 + 1 / ws, 1 - 1 / ws, ws, device=device),
             )
             )
             query_coords = torch.stack((query_coords[1], query_coords[0]))
@@ -111,7 +112,7 @@ class ConvRefiner(nn.Module):
                 if self.no_support_fm:
                     x_hat = torch.zeros_like(x)
                 d = torch.cat((x, x_hat, emb_in_displacement, local_corr), dim=1)
-            else:    
+            else:
                 d = torch.cat((x, x_hat, emb_in_displacement), dim=1)
         else:
             if self.no_support_fm:
@@ -392,7 +393,7 @@ class Encoder(nn.Module):
         x5 = self.resnet.layer4(x4)
         feats = {32: x5, 16: x4, 8: x3, 4: x2, 2: x1, 1: x0}
         return feats
-    
+
     def train(self, mode=True):
         super().train(mode)
         for m in self.modules():
@@ -450,11 +451,11 @@ class Decoder(nn.Module):
         ].expand(b, h, w, 2)
         coarse_coords = rearrange(coarse_coords, "b h w d -> b d h w")
         return coarse_coords
-    
 
-    def forward(self, f1, f2):
+
+    def forward(self, f1, f2, upsample = False, dense_flow = None, dense_certainty = None):
         coarse_scales = self.embedding_decoder.scales()
-        all_scales = self.scales
+        all_scales = self.scales if not upsample else ["8", "4", "2", "1"]
         sizes = {scale: f1[scale].shape[-2:] for scale in f1}
         h, w = sizes[1]
         b = f1[1].shape[0]
@@ -464,9 +465,22 @@ class Decoder(nn.Module):
             b, self.embedding_decoder.internal_dim, *sizes[coarsest_scale], device=f1[coarsest_scale].device
         )
         dense_corresps = {}
-        dense_flow = self.get_placeholder_flow(b, *sizes[coarsest_scale], device)
-        dense_certainty = 0.0
-
+        if not upsample:
+            dense_flow = self.get_placeholder_flow(b, *sizes[coarsest_scale], device)
+            dense_certainty = 0.0
+        else:
+            dense_flow = F.interpolate(
+                    dense_flow,
+                    size=sizes[coarsest_scale],
+                    align_corners=False,
+                    mode="bilinear",
+                )
+            dense_certainty = F.interpolate(
+                    dense_certainty,
+                    size=sizes[coarsest_scale],
+                    align_corners=False,
+                    mode="bilinear",
+                )
         for new_scale in all_scales:
             ins = int(new_scale)
             f1_s, f2_s = f1[ins], f2[ins]
@@ -518,7 +532,7 @@ class Decoder(nn.Module):
                 )
                 if self.detach:
                     dense_flow = dense_flow.detach()
-                    dense_certainty = dense_certainty.detach()                
+                    dense_certainty = dense_certainty.detach()
         return dense_corresps
 
 
@@ -536,6 +550,7 @@ class RegressionMatcher(nn.Module):
         upsample_preds = False,
         symmetric = False,
         name = None,
+        use_soft_mutual_nearest_neighbours = False,
     ):
         super().__init__()
         self.encoder = encoder
@@ -551,8 +566,13 @@ class RegressionMatcher(nn.Module):
         self.symmetric = symmetric
         self.name = name
         self.sample_thresh = 0.05
+        self.upsample_res = (864,1152)
+        if use_soft_mutual_nearest_neighbours:
+            assert symmetric, "MNS requires symmetric inference"
+        self.use_soft_mutual_nearest_neighbours = use_soft_mutual_nearest_neighbours
         
-    def extract_backbone_features(self, batch, batched = True):
+    def extract_backbone_features(self, batch, batched = True, upsample = True):
+        #TODO: only extract stride [1,2,4,8] for upsample = True
         x_q = batch["query"]
         x_s = batch["support"]
         if batched:
@@ -590,7 +610,7 @@ class RegressionMatcher(nn.Module):
         good_matches, good_certainty = matches[good_samples], certainty[good_samples]
         if "balanced" not in self.sample_mode:
             return good_matches, good_certainty
-        
+
         from dkm.utils.kde import kde
         density = kde(good_matches, std=0.1).cpu().numpy()
         p = 1 / (density+1)
@@ -621,14 +641,14 @@ class RegressionMatcher(nn.Module):
         else:
             return dense_corresps
 
-    def forward_symmetric(self, batch):
-        feature_pyramid = self.extract_backbone_features(batch)
+    def forward_symmetric(self, batch, upsample = False):
+        feature_pyramid = self.extract_backbone_features(batch, upsample = upsample)
         f_q_pyramid = feature_pyramid
         f_s_pyramid = {
             scale: torch.cat((f_scale.chunk(2)[1], f_scale.chunk(2)[0]))
             for scale, f_scale in feature_pyramid.items()
         }
-        dense_corresps = self.decoder(f_q_pyramid, f_s_pyramid)
+        dense_corresps = self.decoder(f_q_pyramid, f_s_pyramid, upsample = upsample, **(batch["corresps"] if "corresps" in batch else {}))
         return dense_corresps
 
     def match(
@@ -637,12 +657,14 @@ class RegressionMatcher(nn.Module):
         im2_path,
         *args,
         batched=False,
+        device = None
     ):
         if isinstance(im1_path, (str, os.PathLike)):
             im1, im2 = Image.open(im1_path), Image.open(im2_path)
         else: # assume it is a PIL Image
             im1, im2 = im1_path, im2_path
-        
+        if device is None:
+            device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         symmetric = self.symmetric
         self.train(False)
         with torch.no_grad():
@@ -653,17 +675,17 @@ class RegressionMatcher(nn.Module):
                 # Get images in good format
                 ws = self.w_resized
                 hs = self.h_resized
-                
+
                 test_transform = get_tuple_transform_ops(
                     resize=(hs, ws), normalize=True
                 )
                 query, support = test_transform((im1, im2))
-                batch = {"query": query[None].cuda(), "support": support[None].cuda()}
+                batch = {"query": query[None].to(device), "support": support[None].to(device)}
             else:
                 b, c, h, w = im1.shape
                 b, c, h2, w2 = im2.shape
                 assert w == w2 and h == h2, "For batched images we assume same size"
-                batch = {"query": im1.cuda(), "support": im2.cuda()}
+                batch = {"query": im1.to(device), "support": im2.to(device)}
                 hs, ws = self.h_resized, self.w_resized
             finest_scale = 1
             # Run matcher
@@ -672,40 +694,39 @@ class RegressionMatcher(nn.Module):
             else:
                 dense_corresps = self.forward(batch, batched = True)
             
-            query_to_support = dense_corresps[finest_scale]["dense_flow"]
-            # Get certainty interpolation
-            dense_certainty = dense_corresps[finest_scale]["dense_certainty"]
+            if self.upsample_preds:
+                hs, ws = self.upsample_res
             low_res_certainty = F.interpolate(
             dense_corresps[16]["dense_certainty"], size=(hs, ws), align_corners=False, mode="bilinear"
             )
             cert_clamp = 0
             factor = 0.5
             low_res_certainty = factor*low_res_certainty*(low_res_certainty < cert_clamp)
-            dense_certainty = dense_certainty - low_res_certainty
-            query_to_support = query_to_support.permute(
-                0, 2, 3, 1
-                )
-            
+
             if self.upsample_preds: 
-                hs, ws = 864,1152
                 test_transform = get_tuple_transform_ops(
                     resize=(hs, ws), normalize=True
                 )
                 query, support = test_transform((im1, im2))
-                query, support = query[None].cuda(), support[None].cuda()
+                query, support = query[None].to(device), support[None].to(device)
+                batch = {"query": query, "support": support, "corresps": dense_corresps[finest_scale]}
                 if symmetric:
-                    query, support = torch.cat((query,support)), torch.cat((support,query))
-                query_to_support, dense_certainty = self.decoder.upsample_preds(
-                    query_to_support,
-                    dense_certainty,
-                    query,
-                    support,
+                    dense_corresps = self.forward_symmetric(batch, upsample = True)
+                else:
+                    dense_corresps = self.forward(batch, batched = True, upsample=True)
+            query_to_support = dense_corresps[finest_scale]["dense_flow"]
+            dense_certainty = dense_corresps[finest_scale]["dense_certainty"]
+            
+            # Get certainty interpolation
+            dense_certainty = dense_certainty - low_res_certainty
+            query_to_support = query_to_support.permute(
+                0, 2, 3, 1
                 )
             # Create im1 meshgrid
             query_coords = torch.meshgrid(
                 (
-                    torch.linspace(-1 + 1 / hs, 1 - 1 / hs, hs, device="cuda"),
-                    torch.linspace(-1 + 1 / ws, 1 - 1 / ws, ws, device="cuda"),
+                    torch.linspace(-1 + 1 / hs, 1 - 1 / hs, hs, device=device),
+                    torch.linspace(-1 + 1 / ws, 1 - 1 / ws, ws, device=device),
                 )
             )
             query_coords = torch.stack((query_coords[1], query_coords[0]))
@@ -715,22 +736,34 @@ class RegressionMatcher(nn.Module):
             if (query_to_support.abs() > 1).any() and True:
                 wrong = (query_to_support.abs() > 1).sum(dim=-1) > 0
                 dense_certainty[wrong[:,None]] = 0
+                
             query_to_support = torch.clamp(query_to_support, -1, 1)
             if symmetric:
+                support_coords = query_coords
                 qts, stq = query_to_support.chunk(2)
+                if self.use_soft_mutual_nearest_neighbours:
+                    nms_threshold = 10/hs
+                    cycle_q = F.grid_sample(stq.permute(0,3,1,2), qts, mode = "bilinear", align_corners = False).permute(0,2,3,1)
+                    cycle_s = F.grid_sample(qts.permute(0,3,1,2), stq, mode = "bilinear", align_corners = False).permute(0,2,3,1)
+                    cycle_consistent_q = (cycle_q-query_coords).norm(dim=-1)
+                    cycle_consistent_s = (cycle_s-support_coords).norm(dim=-1)
+                    cycle_consistent_matches = (torch.cat((cycle_consistent_q,cycle_consistent_s), dim = -1) < nms_threshold).float()
+                    
                 q_warp = torch.cat((query_coords, qts), dim=-1)
-                s_warp = torch.cat((stq, query_coords), dim=-1)
+                s_warp = torch.cat((stq, support_coords), dim=-1)
                 warp = torch.cat((q_warp, s_warp),dim=2)
-                dense_certainty = torch.cat(dense_certainty.chunk(2), dim=3)
+                dense_certainty = torch.cat(dense_certainty.chunk(2), dim=3)[:,0]
+                if self.use_soft_mutual_nearest_neighbours:
+                    dense_certainty = dense_certainty * (cycle_consistent_matches + 1e-3)
             else:
                 warp = torch.cat((query_coords, query_to_support), dim=-1)
             if batched:
                 return (
                     warp,
-                    dense_certainty[:, 0]
+                    dense_certainty
                 )
             else:
                 return (
                     warp[0],
-                    dense_certainty[0, 0],
+                    dense_certainty[0],
                 )
