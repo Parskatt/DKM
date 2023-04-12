@@ -1,4 +1,3 @@
-from asyncio import ThreadedChildWatcher
 import numpy as np
 import torch
 from dkm.utils import *
@@ -62,7 +61,7 @@ class Megadepth1500Benchmark:
                     )
                     kpts1 = sparse_matches[:, :2]
                     kpts1 = (
-                        np.stack(
+                        torch.stack(
                             (
                                 w1 * (kpts1[:, 0] + 1) / 2,
                                 h1 * (kpts1[:, 1] + 1) / 2,
@@ -72,7 +71,7 @@ class Megadepth1500Benchmark:
                     )
                     kpts2 = sparse_matches[:, 2:]
                     kpts2 = (
-                        np.stack(
+                        torch.stack(
                             (
                                 w2 * (kpts2[:, 0] + 1) / 2,
                                 h2 * (kpts2[:, 1] + 1) / 2,
@@ -88,8 +87,8 @@ class Megadepth1500Benchmark:
                             norm_threshold = 0.5 / (
                             np.mean(np.abs(K1[:2, :2])) + np.mean(np.abs(K2[:2, :2])))
                             R_est, t_est, mask = estimate_pose(
-                                kpts1,
-                                kpts2,
+                                kpts1.cpu().numpy(),
+                                kpts2.cpu().numpy(),
                                 K1,
                                 K2,
                                 norm_threshold,

@@ -6,7 +6,7 @@ try:
 except:
     print("Cupy not found, local correlation will not work")
 import re
-from .dkm import ConvRefiner
+from ..dkm import ConvRefiner
 
 
 class Stream:
