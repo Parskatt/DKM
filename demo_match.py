@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import numpy as np
 from dkm.utils.utils import tensor_to_pil
 
-from dkm.models.model_zoo import DKMv3_outdoor
+from dkm import DKMv3_outdoor
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 

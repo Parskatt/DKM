@@ -597,31 +597,24 @@ class RegressionMatcher(nn.Module):
         elif "naive" in self.sample_mode:
             dense_certainty = torch.ones_like(dense_certainty)
         matches, certainty = (
-            dense_matches.reshape(-1, 4).cpu().numpy(),
-            dense_certainty.reshape(-1).cpu().numpy(),
+            dense_matches.reshape(-1, 4),
+            dense_certainty.reshape(-1),
         )
         expansion_factor = 4 if "balanced" in self.sample_mode else 1
-        good_samples = np.random.choice(
-            np.arange(len(matches)),
-            size=min(expansion_factor*num, len(certainty)),
-            replace=False,
-            p=certainty / np.sum(certainty),
-        )
+        good_samples = torch.multinomial(certainty, 
+                          num_samples = min(expansion_factor*num, len(certainty)), 
+                          replacement=False)
         good_matches, good_certainty = matches[good_samples], certainty[good_samples]
         if "balanced" not in self.sample_mode:
             return good_matches, good_certainty
 
         from dkm.utils.kde import kde
-        density = kde(good_matches, std=0.1).cpu().numpy()
+        density = kde(good_matches, std=0.1)
         p = 1 / (density+1)
         p[density < 10] = 1e-7 # Basically should have at least 10 perfect neighbours, or around 100 ok ones
-        p = p/np.sum(p)
-        balanced_samples = np.random.choice(
-            np.arange(len(good_matches)),
-            size=min(num,len(good_certainty)),
-            replace=False,
-            p = p,
-        )
+        balanced_samples = torch.multinomial(p, 
+                          num_samples = min(num,len(good_certainty)), 
+                          replacement=False)
         return good_matches[balanced_samples], good_certainty[balanced_samples]
 
     def forward(self, batch, batched = True):
@@ -740,21 +733,11 @@ class RegressionMatcher(nn.Module):
             query_to_support = torch.clamp(query_to_support, -1, 1)
             if symmetric:
                 support_coords = query_coords
-                qts, stq = query_to_support.chunk(2)
-                if self.use_soft_mutual_nearest_neighbours:
-                    nms_threshold = 10/hs
-                    cycle_q = F.grid_sample(stq.permute(0,3,1,2), qts, mode = "bilinear", align_corners = False).permute(0,2,3,1)
-                    cycle_s = F.grid_sample(qts.permute(0,3,1,2), stq, mode = "bilinear", align_corners = False).permute(0,2,3,1)
-                    cycle_consistent_q = (cycle_q-query_coords).norm(dim=-1)
-                    cycle_consistent_s = (cycle_s-support_coords).norm(dim=-1)
-                    cycle_consistent_matches = (torch.cat((cycle_consistent_q,cycle_consistent_s), dim = -1) < nms_threshold).float()
-                    
+                qts, stq = query_to_support.chunk(2)                    
                 q_warp = torch.cat((query_coords, qts), dim=-1)
                 s_warp = torch.cat((stq, support_coords), dim=-1)
                 warp = torch.cat((q_warp, s_warp),dim=2)
                 dense_certainty = torch.cat(dense_certainty.chunk(2), dim=3)[:,0]
-                if self.use_soft_mutual_nearest_neighbours:
-                    dense_certainty = dense_certainty * (cycle_consistent_matches + 1e-3)
             else:
                 warp = torch.cat((query_coords, query_to_support), dim=-1)
             if batched:
