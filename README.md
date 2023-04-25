@@ -6,6 +6,19 @@
 > [Johan Edstedt](https://scholar.google.com/citations?user=Ul-vMR0AAAAJ), [Ioannis Athanasiadis](https://scholar.google.com/citations?user=RCAtJgUAAAAJ), [Mårten Wadenbäck](https://scholar.google.com/citations?user=6WRQpCQAAAAJ), [Michael Felsberg](https://scholar.google.com/citations?&user=lkWfR08AAAAJ)  
 > CVPR 2023
 
+## How to Use?
+<details>
+Our model produces a dense (for all pixels) warp and certainty.
+
+Warp: [B,H,W,4] for all images in batch of size B, for each pixel HxW, we ouput the input and matching coordinate in the normalized grids [-1,1]x[-1,1].
+
+Certainty: [B,H,W] a number in each pixel indicating the matchability of the pixel.
+
+See [demo](dkm/demo/) for two demos of DKM.
+
+See [api.md](dkm/docs/api.md) for API.
+</details>
+
 ## Qualitative Results
 <details>
 
