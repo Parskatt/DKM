@@ -16,7 +16,7 @@ Certainty: [B,H,W] a number in each pixel indicating the matchability of the pix
 
 See [demo](dkm/demo/) for two demos of DKM.
 
-See [api.md](dkm/docs/api.md) for API.
+See [api.md](docs/api.md) for API.
 </details>
 
 ## Qualitative Results
