@@ -32,7 +32,7 @@ if __name__ == "__main__":
     # Match
     warp, certainty = dkm_model.match(im1_path, im2_path, device=device)
     # Sampling not needed, but can be done with model.sample(warp, certainty)
-
+    dkm_model.sample(warp, certainty)
     x1 = (torch.tensor(np.array(im1)) / 255).to(device).permute(2, 0, 1)
     x2 = (torch.tensor(np.array(im2)) / 255).to(device).permute(2, 0, 1)
 

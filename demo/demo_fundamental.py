@@ -18,7 +18,6 @@ if __name__ == "__main__":
     args, _ = parser.parse_known_args()
     im1_path = args.im_A_path
     im2_path = args.im_B_path
-    save_path = args.save_path
 
     # Create model
     dkm_model = DKMv3_outdoor(device=device)
@@ -31,12 +30,8 @@ if __name__ == "__main__":
     warp, certainty = dkm_model.match(im1_path, im2_path, device=device)
     # Sample matches for estimation
     matches, certainty = dkm_model.sample(warp, certainty)
-    
-    kpts1, kpts2 = matches[:,:2].cpu().numpy(),  matches[:,2:].cpu().numpy()
-    kpts1 = np.stack((W_A/2 * (kpts1[:,0]+1), H_B/2 * (kpts1[:,1]+1)),axis=-1)
-    kpts2 = np.stack((W_B/2 * (kpts2[:,0]+1), H_B/2 * (kpts2[:,1]+1)),axis=-1)
-    
+    kpts1, kpts2 = dkm_model.to_pixel_coordinates(matches, H_A, W_A, H_B, W_B)    
     F, mask = cv2.findFundamentalMat(
-        kpts1, kpts2, ransacReprojThreshold=0.2, method=cv2.USAC_MAGSAC, confidence=0.999999, maxIters=10000
+        kpts1.cpu().numpy(), kpts2.cpu().numpy(), ransacReprojThreshold=0.2, method=cv2.USAC_MAGSAC, confidence=0.999999, maxIters=10000
     )
     # TODO: some better visualization    
