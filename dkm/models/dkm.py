@@ -634,8 +634,8 @@ class RegressionMatcher(nn.Module):
         else:
             return dense_corresps
 
-    def forward_symmetric(self, batch, upsample = False):
-        feature_pyramid = self.extract_backbone_features(batch, upsample = upsample)
+    def forward_symmetric(self, batch, upsample = False, batched = True):
+        feature_pyramid = self.extract_backbone_features(batch, upsample = upsample, batched = batched)
         f_q_pyramid = feature_pyramid
         f_s_pyramid = {
             scale: torch.cat((f_scale.chunk(2)[1], f_scale.chunk(2)[0]))
@@ -652,6 +652,7 @@ class RegressionMatcher(nn.Module):
         batched=False,
         device = None
     ):
+        assert not (batched and self.upsample_preds), "Cannot upsample preds if in batchmode (as we don't have access to high res images). You can turn off upsample_preds by model.upsample_preds = False "
         if isinstance(im1_path, (str, os.PathLike)):
             im1, im2 = Image.open(im1_path), Image.open(im2_path)
         else: # assume it is a PIL Image
@@ -683,7 +684,7 @@ class RegressionMatcher(nn.Module):
             finest_scale = 1
             # Run matcher
             if symmetric:
-                dense_corresps  = self.forward_symmetric(batch)
+                dense_corresps  = self.forward_symmetric(batch, batched = True)
             else:
                 dense_corresps = self.forward(batch, batched = True)
             
@@ -704,7 +705,7 @@ class RegressionMatcher(nn.Module):
                 query, support = query[None].to(device), support[None].to(device)
                 batch = {"query": query, "support": support, "corresps": dense_corresps[finest_scale]}
                 if symmetric:
-                    dense_corresps = self.forward_symmetric(batch, upsample = True)
+                    dense_corresps = self.forward_symmetric(batch, upsample = True, batched=True)
                 else:
                     dense_corresps = self.forward(batch, batched = True, upsample=True)
             query_to_support = dense_corresps[finest_scale]["dense_flow"]
