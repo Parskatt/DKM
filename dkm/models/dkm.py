@@ -587,6 +587,7 @@ class RegressionMatcher(nn.Module):
         dense_matches,
         dense_certainty,
         num=10000,
+        device=None
     ):
         if "threshold" in self.sample_mode:
             upper_thresh = self.sample_thresh
@@ -596,6 +597,8 @@ class RegressionMatcher(nn.Module):
             dense_certainty = dense_certainty**(1/3)
         elif "naive" in self.sample_mode:
             dense_certainty = torch.ones_like(dense_certainty)
+        if device is None:
+            device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         matches, certainty = (
             dense_matches.reshape(-1, 4),
             dense_certainty.reshape(-1),
