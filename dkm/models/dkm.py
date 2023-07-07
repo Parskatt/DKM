@@ -646,8 +646,8 @@ class RegressionMatcher(nn.Module):
     
     def to_pixel_coordinates(self, matches, H_A, W_A, H_B, W_B):
         kpts_A, kpts_B = matches[...,:2], matches[...,2:]
-        kpts_A = torch.stack((W_A/2 * (kpts_A[...,0]+1), H_A/2 * (kpts_A[...,1]+1)),axis=-1)
-        kpts_B = torch.stack((W_B/2 * (kpts_B[...,0]+1), H_B/2 * (kpts_B[...,1]+1)),axis=-1)
+        kpts_A = torch.stack((W_A/2 * (kpts_A[...,0]+1)-.5, H_A/2 * (kpts_A[...,1]+1)-.5),axis=-1)
+        kpts_B = torch.stack((W_B/2 * (kpts_B[...,0]+1)-.5, H_B/2 * (kpts_B[...,1]+1)-.5),axis=-1)
         return kpts_A, kpts_B
     
     def match(
