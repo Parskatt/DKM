@@ -1,5 +1,5 @@
 # DKM: Dense Kernelized Feature Matching for Geometry Estimation
-### [Project Page](https://parskatt.github.io/DKM) | [Paper](https://arxiv.org/abs/2202.00667)
+### [Project Page](https://parskatt.github.io/DKM) | [Paper](https://openaccess.thecvf.com/content/CVPR2023/html/Edstedt_DKM_Dense_Kernelized_Feature_Matching_for_Geometry_Estimation_CVPR_2023_paper.html)
 <br/>
 
 > DKM: Dense Kernelized Feature Matching for Geometry Estimation  
