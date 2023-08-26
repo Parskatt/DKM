@@ -291,10 +291,6 @@ def warp_kpts(kpts0, depth0, depth1, T_0to1, K0, K1):
     return valid_mask, w_kpts0
 
 
-imagenet_mean = torch.tensor([0.485, 0.456, 0.406]).to(device)
-imagenet_std = torch.tensor([0.229, 0.224, 0.225]).to(device)
-
-
 def numpy_to_pil(x: np.ndarray):
     """
     Args:
@@ -310,6 +306,8 @@ def numpy_to_pil(x: np.ndarray):
 
 def tensor_to_pil(x, unnormalize=False):
     if unnormalize:
+        imagenet_mean = torch.tensor([0.485, 0.456, 0.406]).to(device)
+        imagenet_std = torch.tensor([0.229, 0.224, 0.225]).to(device)
         x = x * imagenet_std[:, None, None] + imagenet_mean[:, None, None]
     x = x.detach().permute(1, 2, 0).cpu().numpy()
     x = np.clip(x, 0.0, 1.0)
