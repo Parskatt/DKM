@@ -617,8 +617,8 @@ class RegressionMatcher(nn.Module):
                           replacement=False)
         return good_matches[balanced_samples], good_certainty[balanced_samples]
 
-    def forward(self, batch, batched = True):
-        feature_pyramid = self.extract_backbone_features(batch, batched=batched)
+    def forward(self, batch, batched = True, upsample = False):
+        feature_pyramid = self.extract_backbone_features(batch, batched=batched, upsample = upsample)
         if batched:
             f_q_pyramid = {
                 scale: f_scale.chunk(2)[0] for scale, f_scale in feature_pyramid.items()
@@ -628,7 +628,7 @@ class RegressionMatcher(nn.Module):
             }
         else:
             f_q_pyramid, f_s_pyramid = feature_pyramid
-        dense_corresps = self.decoder(f_q_pyramid, f_s_pyramid)
+        dense_corresps = self.decoder(f_q_pyramid, f_s_pyramid, upsample = upsample, **(batch["corresps"] if "corresps" in batch else {}))
         if self.training and self.use_contrastive_loss:
             return dense_corresps, (f_q_pyramid, f_s_pyramid)
         else:
