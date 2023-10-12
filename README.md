@@ -6,6 +6,9 @@
 > [Johan Edstedt](https://scholar.google.com/citations?user=Ul-vMR0AAAAJ), [Ioannis Athanasiadis](https://scholar.google.com/citations?user=RCAtJgUAAAAJ), [Mårten Wadenbäck](https://scholar.google.com/citations?user=6WRQpCQAAAAJ), [Michael Felsberg](https://scholar.google.com/citations?&user=lkWfR08AAAAJ)  
 > CVPR 2023
 
+
+**WARNING**: DKM is trained on a specific resolution, and is sensitive to the image resolution used. This means that feeding images of a different resolution (higher or lower), may give significantly worse performance. If you're finding DKM to give poor performance, please contact me, it's probably something to do with the input.
+
 ## How to Use?
 <details>
 Our model produces a dense (for all pixels) warp and certainty.
