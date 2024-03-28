@@ -120,9 +120,6 @@ class ScanNetBenchmark:
                     tot_e_t.append(e_t)
                     tot_e_R.append(e_R)
                     tot_e_pose.append(e_pose)
-                tot_e_t.append(e_t)
-                tot_e_R.append(e_R)
-                tot_e_pose.append(e_pose)
             tot_e_pose = np.array(tot_e_pose)
             thresholds = [5, 10, 20]
             auc = pose_auc(tot_e_pose, thresholds)
