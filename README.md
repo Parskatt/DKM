@@ -17,7 +17,7 @@ Warp: [B,H,W,4] for all images in batch of size B, for each pixel HxW, we ouput 
 
 Certainty: [B,H,W] a number in each pixel indicating the matchability of the pixel.
 
-See [demo](dkm/demo/) for two demos of DKM.
+See [demo](demo/) for two demos of DKM.
 
 See [api.md](docs/api.md) for API.
 </details>
